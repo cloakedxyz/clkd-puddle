@@ -16,8 +16,9 @@ const next = {
   name,
   definition: values.definition ?? (name === brand.name ? brand.definition : ''),
   githubOwner: brand.githubOwner,
+  githubRepository: values.github ? name : brand.githubRepository,
 };
-const repository = `https://github.com/${next.githubOwner}/${name}`;
+const repository = `https://github.com/${next.githubOwner}/${next.githubRepository}`;
 const changes = new Map<string, string>();
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 changes.set('brand.json', json(next));

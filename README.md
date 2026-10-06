@@ -117,7 +117,8 @@ Keep contributions focused, add tests for behavior changes and run `npm run chec
 See [security notes](SECURITY.md) for limits and dependency advisories.
 
 Branding lives in [brand.json](brand.json). Run `npm run rename -- new-name`;
-add `--github` to rename the repository. Rebuild afterward. Both sites show their
+add `--github` to rename the repository too. The product name and GitHub repository
+name are independent. Rebuild afterward. Both sites show their
 built commit; `dev` marks local changes. Source archives can set `BUILD_COMMIT`.
 
 ## License
