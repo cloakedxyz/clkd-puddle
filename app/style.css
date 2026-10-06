@@ -43,7 +43,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; opacity: .4; }
 [hidden] { display: none !important; }
@@ -122,6 +122,11 @@ h1 em { color: var(--accent); font-style: inherit; }
 .amount-field { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
 .amount-field input { width: 100%; min-width: 0; border: 0; background: transparent; font-size: 44px; letter-spacing: -1.5px; font-weight: 400; padding: 0; border-radius: 3px; color: var(--text); }
 .token-symbol { flex-shrink: 0; font-size: 14px; color: var(--secondary); }
+.token-symbol, .protocol-choice select { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); padding: 8px; }
+.protocol-choice { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; font-size: 12px; }
+#v1-code-field { margin-bottom: 18px; }
+#v1-receive-code { display: block; width: 100%; resize: vertical; box-sizing: border-box; margin-top: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: var(--field); font: 11px/1.6 ui-monospace, monospace; }
+#deposit-panel > .primary { margin-top: 12px; }
 #amount-hint { margin-top: 10px; color: var(--warning); }
 input[aria-invalid="true"] { color: var(--warning); }
 summary { display: flex; align-items: center; justify-content: space-between; list-style: none; cursor: pointer; }

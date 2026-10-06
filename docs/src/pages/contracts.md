@@ -13,10 +13,12 @@ setters or upgrades; the underlying pools have their own governance.
 | --- | --- |
 | Factory | `computeAddress`, `deploy`, `deployAndExecute`, `implementation`, `gasPolicies`, `maxGasFee` |
 | Deposit | `preview`, `execute`, `recover`, `recoverNative` |
+| V1 deposit only | `ragequit` (proof required, fixed recovery wallet) |
 
-RAILGUN and Privacy Pools share `DepositBase` and `DepositFactory`: permissions,
+RAILGUN and both Privacy Pools versions share `DepositBase` and `DepositFactory`: permissions,
 fee policy, execution, recovery and protection against callbacks entering again.
-Protocol adapters only build or validate the pool call. Clones delegate to their
+Protocol adapters build or validate the pool call. V1 adds native settlement and its
+original-depositor pool exit through narrow extensions. Clones delegate to their
 factory's fixed implementation. The factory creates and initializes each clone in
 one transaction; initialization cannot run again, including on the implementation.
 The salt includes every deposit setting, so changing the recipient or recovery
@@ -40,26 +42,32 @@ Recovery does not cancel an address. Repeated and later transfers remain
 recoverable; an unspent address can still shield if funded again. The service may
 stop automatic retries after a recovery event, without changing those permissions.
 
-RAILGUN accepts any supported token and amount. Privacy Pools commits a complete
+RAILGUN accepts any supported token and amount. Privacy Pools v2 commits a complete
 prepared deposit call, including the proof and encrypted recipient data. Its gas
 quote and gross amount can change while preserving the token and net pool deposit.
 Changing that private deposit requires a new prepared call and address.
 
+Privacy Pools v1 fixes the asset, original pool and recipient-generated deposit hash.
+Its amount can change with a new quote. A separate owner-only `ragequit` submits a
+proof to that original pool and forwards exactly the returned amount to the fixed
+recovery wallet. Registry removal does not change the exit target. Failed forwarding
+reverts the whole exit, preserving the note. Pre-deposit recovery calls no pool code.
+
 ## Limits
 
-- Standard ERC-20 tokens only. No native ETH shielding, transfer-tax or rebasing tokens.
+- Standard ERC-20 tokens; v1 also supports native ETH. No transfer-tax or rebasing tokens.
 - Initial transfers and amounts remain public. Reusing a recovery address links deposits.
 - Depositing depends on the relayer and selected pool being available; recovery remains independent of the relayer.
 
 ## Verification
 
 The current contracts are **unaudited**. Shared Solidity unit, fuzz and transaction-sequence
-tests cover both adapters. Integration tests use real RAILGUN contracts and Privacy
+tests cover all three adapters. Integration tests use real RAILGUN contracts and Privacy
 Pools proofs; they cover deposit, recipient discovery and recovery. Privacy Pools
 also has local private withdrawal and public exit tests.
 
 Contract changes produce new CREATE2 addresses. Recovery uses one current file
-format for both protocols, checked against the tool's own contract build. Old
+format for all three integrations, checked against the tool's own contract build. Old
 pre-release formats and mismatched factory code are rejected.
 
 The recipient confirmed wallet receipt in the first Arbitrum mainnet pilot on 29 September 2026. The revised contracts, cross-chain flow, private spending and production Proof-of-Innocence acceptance still need live validation.

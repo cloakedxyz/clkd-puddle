@@ -1,20 +1,11 @@
 import assert from 'node:assert/strict';
-import { ZeroAddress } from 'ethers';
-import { parseRecoveryFile, recoveryFormat } from '../recovery/core.ts';
 import type { RecoveryArtifacts, RecoveryBuild } from '../recovery/core.ts';
-import type { DepositRecord } from '../protocols/deposit.ts';
 import type { CompiledContracts } from './types.ts';
 
-export function createRecoveryFile(deposit: DepositRecord, asset = ZeroAddress) {
-  const { protocol, chainId, factory, pool, salt, config } = deposit;
-  return parseRecoveryFile(JSON.stringify({
-    format: recoveryFormat, version: 1, protocol, asset, chainId: String(chainId), factory, pool,
-    depositAddress: deposit.address, salt, config,
-  }));
-}
+export { createRecoveryFile } from '../recovery/core.ts';
 
 export function recoveryArtifacts(contracts: CompiledContracts): RecoveryArtifacts {
-  function build(protocol: 'Railgun' | 'PrivacyPools'): RecoveryBuild {
+  function build(protocol: 'Railgun' | 'PrivacyPools' | 'PrivacyPoolsV1'): RecoveryBuild {
     const source = contracts[`contracts/protocols/${protocol}Deposit.sol`];
     const factory = source[`${protocol}DepositFactory`];
     const forwarder = source[`${protocol}Deposit`];
@@ -30,5 +21,5 @@ export function recoveryArtifacts(contracts: CompiledContracts): RecoveryArtifac
       factory: runtime(factory, ['pool', 'implementation']),
       implementation: runtime(forwarder, ['factory', 'pool']) };
   }
-  return { railgun: build('Railgun'), 'privacy-pools': build('PrivacyPools') };
+  return { railgun: build('Railgun'), 'privacy-pools': build('PrivacyPools'), 'privacy-pools-v1': build('PrivacyPoolsV1') };
 }

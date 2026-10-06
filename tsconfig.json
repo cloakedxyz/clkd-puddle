@@ -16,6 +16,7 @@
   },
   "include": [
     "app/**/*.ts",
+    "client/**/*.ts",
     "protocols/**/*.ts",
     "recovery/**/*.ts",
     "scripts/**/*.ts",

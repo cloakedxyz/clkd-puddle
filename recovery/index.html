@@ -16,7 +16,7 @@
   <header><a class="brand" href="./">{{brand.name}}<span> / recovery</span></a><a href="{{brand.repository}}/tree/main/recovery" target="_blank" rel="noreferrer">Source ↗</a></header>
   <main>
     <h1>Your funds.<br><em>Your way back.</em></h1>
-    <p class="intro">Recover an unshielded deposit to your wallet.<br>No {{brand.displayName}} account or relayer needed.</p>
+    <p class="intro">Recover your deposit to your wallet.<br>No {{brand.displayName}} account or relayer needed.</p>
     <fieldset id="controls" disabled>
       <legend class="sr-only">Recovery</legend>
       <section class="card">
@@ -41,10 +41,21 @@
           <p class="hint">You pay network gas. No service fee.</p>
         </div>
       </section>
+      <section class="card" id="v1-recovery" hidden>
+        <h2>Privacy Pools v1 public exit</h2>
+        <p class="hint">For funds already in the pool. This returns the current note’s balance to the recovery wallet above and publicly links the exit to your deposit. Paid fees are not refunded.</p>
+        <label for="note-file">Private note backup</label>
+        <input id="note-file" type="file" accept=".json,application/json">
+        <p class="hint">Contains spending secrets. Read only on this device; never uploaded. After a partial withdrawal, use your updated note backup.</p>
+        <details><summary>Limit the deposit search</summary><label for="from-block">Starting block (0 searches all history)</label><input id="from-block" type="number" min="0" step="1" value="0"></details>
+        <div class="balance"><span>In the pool</span><strong id="pool-balance">—</strong></div>
+        <button id="pool-check" type="button" class="secondary">Check pool balance</button>
+        <button id="pool-submit" type="button" hidden>Recover publicly from pool</button>
+      </section>
     </fieldset>
     <p id="status" role="status" aria-live="polite"></p>
     <p id="transaction-row" class="hint" hidden>Latest transaction <code id="transaction"></code></p>
-    <p class="footnote">Already shielded? Your funds stay in your protocol wallet.<br>Recovery is public. Current contracts are unaudited.</p>
+    <p class="footnote">Normal private withdrawals use your protocol wallet. This tool also supports the Privacy Pools v1 public exit.<br>Recovery is public. Current contracts are unaudited.</p>
   </main>
   <footer><div class="theme-picker" role="group" aria-label="Theme"><button data-theme-choice="light" type="button" aria-pressed="true">Light</button><button data-theme-choice="dark" type="button" aria-pressed="false">Dark</button></div><!-- build-version --></footer>
 </body>

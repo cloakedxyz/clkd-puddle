@@ -1,0 +1,11 @@
+.sepolia { display: block; max-width: 560px; margin: 48px auto; padding: 0 24px 64px; }
+.sepolia h1 { font-size: 36px; font-style: normal; letter-spacing: -1px; margin: 32px 0 16px; }
+.sepolia p { line-height: 1.55; margin: 16px 0; }
+.sepolia label { display: block; margin: 24px 0 8px; }
+.sepolia input, .sepolia textarea, .sepolia select { width: 100%; padding: 12px; box-sizing: border-box; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.sepolia button { margin: 16px 0; font-size: 14px; }
+.sepolia #refresh { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.sepolia .address { overflow-wrap: anywhere; font-family: monospace; }
+.sepolia #error { color: #b42318; }
+.sepolia details { margin: 24px 0; }
+.sepolia [hidden] { display: none !important; }

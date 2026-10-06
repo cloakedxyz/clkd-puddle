@@ -5,10 +5,7 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2024", "DOM"],
     "types": [],
-    "noEmit": false,
-    "rewriteRelativeImportExtensions": true,
-    "rootDir": ".",
-    "outDir": "../.cache/recovery"
+    "noEmit": true
   },
   "include": ["*.ts"]
 }

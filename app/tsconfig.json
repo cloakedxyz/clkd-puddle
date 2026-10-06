@@ -5,10 +5,8 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2024", "DOM"],
     "types": [],
-    "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "rootDir": ".",
-    "outDir": "../.cache/ui"
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["*.ts"]
 }

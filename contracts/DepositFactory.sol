@@ -36,7 +36,8 @@ abstract contract DepositFactory is IFeePolicy {
         pool = target;
         for (uint256 i; i < policies.length; ++i) {
             TokenPolicy memory policy = policies[i];
-            if (address(policy.token).code.length == 0 || gasPolicies[policy.token].supported
+            if ((address(policy.token).code.length == 0 && !(address(policy.token) == address(0) && _supportsNative()))
+                || gasPolicies[policy.token].supported
                 || policy.maxGasFeeBps > 9_990) revert InvalidConfiguration();
             gasPolicies[policy.token] = GasPolicy(policy.maxGasFee, policy.maxGasFeeBps, true);
             emit TokenPolicySet(address(policy.token), policy.maxGasFee, policy.maxGasFeeBps);
@@ -83,4 +84,6 @@ abstract contract DepositFactory is IFeePolicy {
     }
 
     function _validateRecipient(bytes calldata recipient) internal pure virtual;
+
+    function _supportsNative() internal pure virtual returns (bool) { return false; }
 }

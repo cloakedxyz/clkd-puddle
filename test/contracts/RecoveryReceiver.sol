@@ -18,6 +18,11 @@ contract RecoveryReceiver {
 
     function recoverNative() external { target.recoverNative(); }
 
+    function forward(bytes calldata data) external {
+        (bool ok, bytes memory reason) = address(target).call(data);
+        if (!ok) assembly { revert(add(reason, 32), mload(reason)) }
+    }
+
     receive() external payable {
         require(!rejectPayment, "Payment rejected");
         (bool ok, bytes memory reason) = address(target).call(abi.encodeWithSignature("recoverNative()"));

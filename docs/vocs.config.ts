@@ -11,7 +11,8 @@ export default defineConfig({
   sidebar: [
     { text: 'How it works', link: '/' },
     { text: 'Fees', link: '/fees' },
-    { text: 'Privacy Pools', link: '/privacy-pools' },
+    { text: 'Privacy Pools v2', link: '/privacy-pools' },
+    { text: 'Privacy Pools v1', link: '/privacy-pools-v1' },
     { text: 'Recovery', link: '/recovery' },
     { text: 'Contracts & security', link: '/contracts' },
   ],

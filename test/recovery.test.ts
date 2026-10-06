@@ -200,7 +200,8 @@ test('serves a self-contained static recovery site without a deposit API or file
     assert.doesNotMatch(html, /\{\{brand\./);
     assert.match(page.headers.get('content-security-policy') ?? '', /connect-src 'self'/);
     assert.match(page.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
-    for (const path of ['/main.js', '/core.js', '/vendor/ethers.js', '/contracts.json', '/theme.js']) {
+    assert.match(html, /Privacy Pools v1 public exit/);
+    for (const path of ['/main.js', '/core.js', '/vendor/ethers.js', '/contracts.json', '/theme.js', '/v1/commitment.wasm', '/v1/commitment.zkey']) {
       assert.equal((await fetch(site.url + path)).status, 200);
     }
     assert.equal((await fetch(site.url + '/api/state')).status, 404);

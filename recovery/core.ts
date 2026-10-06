@@ -1,6 +1,8 @@
 import { AbiCoder, Contract, Interface, ZeroAddress, ZeroHash, concat, getAddress, getCreate2Address,
   keccak256, zeroPadValue } from 'ethers';
 import type { Provider, TransactionRequest } from 'ethers';
+import { decodeV1Recipient } from '../protocols/privacy-pools-v1-data.ts';
+import type { DepositRecord } from '../protocols/deposit.ts';
 
 export const recoveryFormat = 'private-deposit-recovery';
 export const maxRecoveryFileBytes = 16_384;
@@ -13,7 +15,7 @@ const forwarderABI = new Interface([
 export interface RecoveryFile {
   format: typeof recoveryFormat;
   version: 1;
-  protocol: 'railgun' | 'privacy-pools';
+  protocol: 'railgun' | 'privacy-pools' | 'privacy-pools-v1';
   chainId: string;
   factory: string;
   pool: string;
@@ -35,6 +37,12 @@ interface RuntimeBuild {
 }
 export type RecoveryArtifacts = Record<RecoveryFile['protocol'], RecoveryBuild>;
 export const recoveryAsset = (file: RecoveryFile) => file.asset;
+
+export function createRecoveryFile(deposit: DepositRecord, asset = ZeroAddress): RecoveryFile {
+  const { protocol, chainId, factory, pool, salt, config } = deposit;
+  return parseRecoveryFile(JSON.stringify({ format: recoveryFormat, version: 1, protocol, asset,
+    chainId: String(chainId), factory, pool, depositAddress: deposit.address, salt, config }));
+}
 
 function object(value: unknown, keys: string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)
@@ -68,16 +76,17 @@ export function parseRecoveryFile(text: string): RecoveryFile {
   const file = object(input, ['format', 'version', 'protocol', 'chainId', 'factory', 'pool',
     'depositAddress', 'salt', 'asset', 'config']);
   if (file.format !== recoveryFormat || file.version !== 1
-    || (file.protocol !== 'railgun' && file.protocol !== 'privacy-pools')) throw new Error('Unsupported recovery format.');
+    || !['railgun', 'privacy-pools', 'privacy-pools-v1'].includes(String(file.protocol))) throw new Error('Unsupported recovery format.');
   const config = object(file.config, ['recipient', 'recovery', 'relayer', 'feeRecipient']);
-  const recipientBytes = file.protocol === 'railgun' ? 160 : 32;
+  const recipientBytes = file.protocol === 'railgun' ? 160 : file.protocol === 'privacy-pools-v1' ? 96 : 32;
   if (typeof config.recipient !== 'string'
     || !new RegExp(`^0x[0-9a-fA-F]{${recipientBytes * 2}}$`).test(config.recipient)) {
     throw new Error('Invalid recipient instructions.');
   }
   if (file.protocol === 'privacy-pools' && BigInt(config.recipient) === 0n) throw new Error('Invalid deposit commitment.');
+  if (file.protocol === 'privacy-pools-v1') decodeV1Recipient(config.recipient);
   const result: RecoveryFile = {
-    format: recoveryFormat, version: 1, protocol: file.protocol, chainId: uint(file.chainId),
+    format: recoveryFormat, version: 1, protocol: file.protocol as RecoveryFile['protocol'], chainId: uint(file.chainId),
     factory: address(file.factory), pool: address(file.pool), depositAddress: address(file.depositAddress),
     salt: bytes32(file.salt), asset: address(file.asset, true),
     config: { recipient: config.recipient.toLowerCase(), recovery: address(config.recovery),

@@ -6,11 +6,16 @@ import { fileURLToPath } from 'node:url';
 import { brand } from './brand.ts';
 import { createEnvironment, createRecipient, prepareDeposit, fund, settle, decryptDeposit } from './harness.ts';
 import type { PreparedDeposit } from './types.ts';
+import { ZeroAddress, toBeHex } from 'ethers';
 import type { TransactionReceipt } from 'ethers';
-import { gasFee, quoteAmount } from '../app/shared.ts';
+import { quoteAmount } from '../app/shared.ts';
 import type { AppState } from '../app/shared.ts';
-import { createRecoveryFile } from './recovery-file.ts';
-import { mined, recoveryTransaction } from '../protocols/deposit.ts';
+import { createRecoveryFile, recoveryArtifacts } from './recovery-file.ts';
+import { parseRecoveryFile } from '../recovery/core.ts';
+import { mined, recoveryTransaction, relayDeposit, inspectDeposit } from '../protocols/deposit.ts';
+import { compileV1, environment as createV1Environment } from './privacy-pools-v1-local.ts';
+import type { PrivacyPoolsV1Deposit } from '../protocols/privacy-pools-v1.ts';
+import { decodeV1Recipient, v1PoolABI, v1ForwarderABI } from '../protocols/privacy-pools-v1-data.ts';
 
 class RequestError extends Error {
   readonly status: number;
@@ -38,13 +43,16 @@ export async function startLocalApp(port = 5173) {
   try {
     assert.equal(await env.pool.shieldFee(), 25n, 'Local quote must match the pool fee');
     const recipient = await createRecipient();
+    const v1 = await createV1Environment(compileV1(), env.provider);
     const state: AppState = {
       recipient: recipient.address, recovery: await env.recovery.getAddress(),
       relayer: await env.relayer.getAddress(), feeRecipient: await env.feeCollector.getAddress(),
       token: await env.token.getAddress(), pool: await env.pool.getAddress(),
       factory: await env.factory.getAddress(), privateBalance: '0', deposit: null,
+      v1: { chainId: '31337', factory: await v1.factory.getAddress(), pool: await v1.entrypoint.getAddress(),
+        token: await v1.token.getAddress(), feeRecipient: await v1.fees.getAddress() },
     };
-    let prepared: PreparedDeposit | undefined;
+    let prepared: PreparedDeposit | PrivacyPoolsV1Deposit | undefined;
     let shieldReceipt: TransactionReceipt | undefined;
     let busy = false;
     let task: Promise<void> | undefined;
@@ -63,12 +71,27 @@ export async function startLocalApp(port = 5173) {
 
     async function relay() {
       assert(prepared && state.deposit);
+      const gasFee = BigInt(state.deposit.quote.gasFee);
       if (!shieldReceipt) {
         state.deposit.phase = 'shielding';
-        shieldReceipt = await settle(env, prepared, gasFee);
+        shieldReceipt = prepared.protocol === 'railgun' ? await settle(env, prepared, gasFee)
+          : await mined(relayDeposit(v1.adapter, prepared, v1.relayer));
         state.deposit.shieldingTx = shieldReceipt.hash;
       }
       state.deposit.phase = 'verifying';
+      if (prepared.protocol === 'privacy-pools-v1') {
+        const pool = decodeV1Recipient(prepared.config.recipient).pool;
+        const logs = shieldReceipt.logs.filter(log => log.address.toLowerCase() === pool.toLowerCase())
+          .map(log => v1PoolABI.parseLog(log));
+        const deposited = logs.find(log => log?.name === 'Deposited');
+        assert(deposited && deposited.args.depositor === prepared.address);
+        assert.equal(String(deposited.args.value), state.deposit.quote.received);
+        state.deposit.received = String(deposited.args.value);
+        state.deposit.commitment = toBeHex(deposited.args.commitment, 32);
+        state.deposit.phase = 'complete';
+        delete state.deposit.error;
+        return;
+      }
       const note = await decryptDeposit(env, recipient, shieldReceipt);
       const quote = state.deposit.quote;
       assert.equal(note.amount + note.fee + BigInt(quote.serviceFee) + gasFee, BigInt(quote.amount));
@@ -84,6 +107,7 @@ export async function startLocalApp(port = 5173) {
 
     const files = new Map([
       ['/', ['.cache/ui/index.html', 'text/html']],
+      ['/receive', ['.cache/ui/index.html', 'text/html']],
       ['/style.css', ['app/style.css', 'text/css']],
       ['/main.js', ['.cache/ui/main.js', 'text/javascript']],
       ['/theme.js', ['.cache/ui/theme.js', 'text/javascript']],
@@ -131,6 +155,11 @@ export async function startLocalApp(port = 5173) {
       };
       if (request.method === 'GET') {
         if (path === '/api/state') return sendState();
+        if (path === '/api/recovery-artifacts') {
+          response.writeHead(200, { 'Content-Type': 'application/json' });
+          response.end(JSON.stringify(recoveryArtifacts(env.contracts)));
+          return;
+        }
         if (path === '/api/recovery') {
           const requested = new URL(request.url!, `http://${host}`).searchParams.get('address');
           if (!prepared || requested !== prepared.address) throw new RequestError('This deposit is no longer active.', 409);
@@ -153,24 +182,62 @@ export async function startLocalApp(port = 5173) {
         throw new RequestError('Use the local application to submit actions.', 403);
       }
       const body = await readBody(request);
+      if (path === '/api/rpc') {
+        const methods = ['eth_chainId', 'eth_blockNumber', 'eth_getCode', 'eth_call', 'eth_getLogs',
+          'eth_getBalance', 'eth_getTransactionReceipt', 'eth_getTransactionByHash', 'eth_getBlockByNumber'];
+        if (body.jsonrpc !== '2.0' || typeof body.method !== 'string' || !methods.includes(body.method)
+          || !Array.isArray(body.params) || !['number', 'string'].includes(typeof body.id)) {
+          throw new RequestError('Only read-only local chain requests are supported.');
+        }
+        let result;
+        try { result = { result: await env.provider.send(body.method, body.params) }; }
+        catch { result = { error: { code: -32000, message: 'Local chain request failed.' } }; }
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ jsonrpc: '2.0', id: body.id, ...result }));
+        return;
+      }
       if (busy) throw new RequestError('A deposit action is already running.', 409);
       if (path === '/api/deposits') {
-        if (body.protocol !== undefined && body.protocol !== 'railgun') {
-          throw new RequestError('This local demo supports RAILGUN only.');
+        if (body.protocol !== undefined && body.protocol !== 'railgun' && body.protocol !== 'privacy-pools-v1') {
+          throw new RequestError('Choose RAILGUN or Privacy Pools v1.');
         }
+        if (Object.keys(body).some(key => !['protocol', 'amount', 'asset', 'recoveryFile'].includes(key))) {
+          throw new RequestError('Unexpected deposit fields. Keep private note backups on your device.');
+        }
+        const protocol = body.protocol ?? 'railgun';
+        const asset = body.asset ?? 'USDC';
+        if (asset !== 'ETH' && asset !== 'USDC') throw new RequestError('Choose ETH or USDC.');
         if (state.deposit && !['complete', 'recovered'].includes(state.deposit.phase)) {
           throw new RequestError('Finish the current deposit first.', 409);
         }
         if (typeof body.amount !== 'string') throw new RequestError('Enter a deposit amount.');
         let quote;
-        try { quote = quoteAmount(body.amount); }
+        try { quote = quoteAmount(body.amount, protocol, asset); }
         catch (error) { throw new RequestError(error instanceof Error ? error.message : 'Invalid amount.'); }
         busy = true;
         try {
-          prepared = await prepareDeposit(env, recipient.address,
-            { amount: BigInt(quote.amount), gasFee });
+          if (protocol === 'railgun') {
+            prepared = await prepareDeposit(env, recipient.address,
+              { amount: BigInt(quote.amount), gasFee: BigInt(quote.gasFee) });
+          } else {
+            try {
+              const file = parseRecoveryFile(JSON.stringify(body.recoveryFile));
+              assert.equal(file.protocol, 'privacy-pools-v1');
+              assert.equal(file.config.recovery, state.recovery);
+              assert.equal(file.config.relayer, state.relayer);
+              assert.equal(file.config.feeRecipient, state.v1.feeRecipient);
+              const token = asset === 'ETH' ? ZeroAddress : state.v1.token;
+              assert.equal(file.asset, token);
+              const block = await env.provider.getBlock('latest');
+              assert(block);
+              prepared = await v1.adapter.quote(env.provider, { protocol: 'privacy-pools-v1',
+                chainId: BigInt(file.chainId), factory: file.factory, pool: file.pool,
+                address: file.depositAddress, salt: file.salt, config: file.config },
+              { token, amount: BigInt(quote.amount), gasFee: BigInt(quote.gasFee), deadline: BigInt(block.timestamp + 3600) });
+            } catch { throw new RequestError('Invalid public v1 receive instructions.'); }
+          }
           shieldReceipt = undefined;
-          state.deposit = { protocol: prepared.protocol, address: prepared.address, quote, phase: 'ready' };
+          state.deposit = { protocol: prepared.protocol, asset, address: prepared.address, quote, phase: 'ready' };
         } finally { busy = false; }
         return sendState(201);
       }
@@ -182,35 +249,68 @@ export async function startLocalApp(port = 5173) {
         deposit.phase = 'funding';
         runTask(async () => {
           assert.equal(await env.provider.getCode(deposit.address), '0x');
-          const receipt = await fund(env, deposit.address, BigInt(deposit.quote.amount));
+          const amount = BigInt(deposit.quote.amount);
+          let receipt;
+          if (deposit.protocol === 'railgun') receipt = await fund(env, deposit.address, amount);
+          else if (deposit.asset === 'ETH') receipt = await mined(v1.sender.sendTransaction({ to: deposit.address, value: amount }));
+          else {
+            await mined(v1.token.getFunction('mint')(await v1.sender.getAddress(), amount));
+            receipt = await mined(v1.token.connect(v1.sender).getFunction('transfer')(deposit.address, amount));
+          }
           deposit.fundingTx = receipt.hash;
           assert.equal(await env.provider.getCode(deposit.address), '0x');
           deposit.phase = 'funded';
-          await relay();
         });
         return sendState(202);
       }
-      if (path === '/api/relay' && deposit.phase === 'error' && deposit.fundingTx) {
+      if (path === '/api/relay' && ['funded', 'error'].includes(deposit.phase) && deposit.fundingTx) {
         delete deposit.error;
         runTask(relay);
         return sendState(202);
       }
-      if (path === '/api/recover' && deposit.phase === 'error' && !shieldReceipt) {
+      if (path === '/api/recover' && ['funded', 'error'].includes(deposit.phase) && !shieldReceipt) {
         deposit.phase = 'recovering';
         runTask(async () => {
           assert(prepared);
           const owner = await env.recovery.getAddress();
+          const adapter = prepared.protocol === 'railgun' ? env.adapter : v1.adapter;
           // A fresh address needs deployment first; an existing one can recover immediately.
           const deployed = await env.provider.getCode(prepared.address) !== '0x';
           let receipt = await mined(env.recovery.sendTransaction(await recoveryTransaction(
-            env.adapter, prepared, env.provider, owner, prepared.quote.token)));
+            adapter, prepared, env.provider, owner, prepared.quote.token)));
           if (!deployed) receipt = await mined(env.recovery.sendTransaction(await recoveryTransaction(
-            env.adapter, prepared, env.provider, owner, prepared.quote.token)));
+            adapter, prepared, env.provider, owner, prepared.quote.token)));
           assert(receipt);
-          assert.equal(await env.token.balanceOf(deposit.address), 0n);
+          assert.equal((await inspectDeposit(adapter, prepared, env.provider)).balance, 0n);
           deposit.recoveryTx = receipt.hash;
           deposit.phase = 'recovered';
           delete deposit.error;
+        });
+        return sendState(202);
+      }
+      if (path === '/api/pool-recovery' && prepared.protocol === 'privacy-pools-v1'
+        && deposit.phase === 'complete') {
+        if (Object.keys(body).some(key => !['address', 'data'].includes(key)) || typeof body.data !== 'string') {
+          throw new RequestError('Provide only the public recovery proof.');
+        }
+        busy = true;
+        try {
+          const decoded = v1ForwarderABI.decodeFunctionData('ragequit', body.data);
+          assert.equal(v1ForwarderABI.encodeFunctionData('ragequit', decoded).toLowerCase(), body.data.toLowerCase());
+          await env.provider.call({ from: state.recovery, to: deposit.address, data: body.data });
+        } catch { busy = false; throw new RequestError('Invalid pool recovery proof.'); }
+        const data = body.data;
+        deposit.phase = 'recovering';
+        runTask(async () => {
+          try {
+            const receipt = await mined(v1.owner.sendTransaction({ to: deposit.address, data }));
+            deposit.recoveryTx = receipt.hash;
+            deposit.phase = 'recovered';
+          } catch (error) {
+            deposit.phase = 'complete';
+            deposit.error = 'Pool recovery failed. Your note can be retried.';
+            console.error(error instanceof Error ? error.message : 'Pool recovery failed');
+          }
         });
         return sendState(202);
       }

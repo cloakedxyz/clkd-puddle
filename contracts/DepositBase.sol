@@ -101,10 +101,17 @@ abstract contract DepositBase is ReentrancyGuardUpgradeable {
         if (msg.sender != relayer && msg.sender != factory) revert UnauthorizedRelayer();
         (uint256 serviceFee, uint256 poolAmount) = preview(quote);
         bytes memory callData = _poolCall(quote.token, poolAmount, data);
+        spent = true;
+        _settle(quote, serviceFee, poolAmount, callData);
+        emit Executed(address(quote.token), quote.amount, serviceFee, quote.gasFee, poolAmount);
+    }
+
+    function _settle(DepositQuote calldata quote, uint256 serviceFee, uint256 poolAmount, bytes memory callData)
+        internal virtual
+    {
         IERC20 token = quote.token;
         uint256 beforeBalance = token.balanceOf(address(this));
         if (beforeBalance < quote.amount) revert InvalidBalance();
-        spent = true;
 
         uint256 totalFee = serviceFee + quote.gasFee;
         if (totalFee != 0) {
@@ -118,7 +125,6 @@ abstract contract DepositBase is ReentrancyGuardUpgradeable {
         pool.functionCall(callData);
         token.safeApprove(pool, 0);
         if (token.balanceOf(address(this)) != beforeBalance - quote.amount) revert IncompleteDeposit();
-        emit Executed(address(token), quote.amount, serviceFee, quote.gasFee, poolAmount);
     }
 
     function _poolCall(IERC20 token, uint256 amount, bytes calldata data) internal view virtual returns (bytes memory);

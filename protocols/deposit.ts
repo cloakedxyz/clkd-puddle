@@ -1,7 +1,7 @@
 import { Contract, Interface, ZeroAddress, getAddress, hexlify, randomBytes } from 'ethers';
 import type { Provider, Signer, TransactionRequest, TransactionResponse } from 'ethers';
 
-export type Protocol = 'railgun' | 'privacy-pools';
+export type Protocol = 'railgun' | 'privacy-pools' | 'privacy-pools-v1';
 
 export interface Deployment {
   chainId: bigint;
@@ -132,10 +132,10 @@ export async function inspectDeposit<P extends Protocol>(
   adapter: DepositAdapter<P>, deposit: DepositExecution<P>, provider: Provider,
 ) {
   await validateDeposit(adapter, deposit, provider);
-  const token = new Contract(deposit.quote.token, tokenABI, provider);
   const [code, balance] = await Promise.all([
     provider.getCode(deposit.address),
-    token.getFunction('balanceOf')(deposit.address) as Promise<bigint>,
+    sameAddress(deposit.quote.token, ZeroAddress) ? provider.getBalance(deposit.address)
+      : new Contract(deposit.quote.token, tokenABI, provider).getFunction('balanceOf')(deposit.address) as Promise<bigint>,
   ]);
   const deployed = code !== '0x';
   const spent: boolean = deployed

@@ -15,6 +15,10 @@ em { color: var(--accent); }
 .intro { color: var(--muted); margin-bottom: 32px; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 26px; }
+.card + .card { margin-top: 20px; }
+.card h2 { margin: 0 0 12px; font-size: 21px; line-height: 1.3; }
+.card p { overflow-wrap: anywhere; }
+.card p + label { margin-top: 18px; }
 label { display: block; margin-bottom: 8px; font-weight: 550; }
 input, select, textarea { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--bg); color: var(--text); font: inherit; }
 input[type="file"] { font-size: 12px; }

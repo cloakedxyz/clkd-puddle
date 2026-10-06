@@ -29,6 +29,7 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             docs/package-lock.json
+            test/privacy-pools-v1/package-lock.json
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
         with:
           version: v1.7.1
@@ -36,6 +37,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm ci --prefix docs --ignore-scripts
       - run: npm run setup:contracts
+      - run: npm run privacy-pools-v1:setup
+      - run: npx playwright install --with-deps chromium
       - name: TypeScript, Solidity, integration tests and site builds
         run: npm run check
         env:

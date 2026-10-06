@@ -12,12 +12,13 @@
   "scripts": {
     "rename": "node scripts/rename.ts",
     "dev": "npm run build:ui && npm run recovery:build && node scripts/dev.ts",
-    "dev:app": "npm run build:ui && node scripts/local-app.ts",
+    "dev:app": "npm run build:ui && npm run recovery:build && node scripts/local-app.ts",
+    "dev:sepolia": "node scripts/sepolia-app.ts",
     "docs:dev": "npm --prefix docs run dev",
     "docs:build": "npm --prefix docs run build",
     "docs:typecheck": "tsc --noEmit -p docs/tsconfig.json",
     "build:ui": "tsc -p app/tsconfig.json && node scripts/build-version.ts",
-    "test:ui": "npm run build:ui && node --test test/local-app.test.ts",
+    "test:ui": "npm run build:ui && npm run recovery:build && node --test test/local-app.test.ts",
     "recovery:build": "tsc -p app/tsconfig.json && tsc -p recovery/tsconfig.json && node scripts/build-recovery.ts",
     "recovery:dev": "npm run recovery:build && node scripts/serve-recovery.ts",
     "test:recovery": "npm run recovery:build && node --test test/recovery.test.ts",
@@ -25,12 +26,15 @@
     "setup:contracts": "node scripts/setup-foundry.ts",
     "test:contracts": "forge test",
     "test": "node --test --test-concurrency=1 test/deposit.test.ts",
+    "test:client": "node --test test/client.test.ts",
     "test:fork": "node --test test/fork.test.ts",
     "privacy-pools:setup": "npm --prefix test/privacy-pools ci --ignore-scripts && node test/privacy-pools/setup.ts",
     "test:privacy-pools": "npm --prefix test/privacy-pools run typecheck && npm --prefix test/privacy-pools test",
+    "privacy-pools-v1:setup": "npm --prefix test/privacy-pools-v1 ci --ignore-scripts && node scripts/setup-privacy-pools-v1.ts",
+    "test:privacy-pools-v1": "npm run recovery:build && node --test test/privacy-pools-v1/integration.test.ts",
     "demo": "node scripts/demo.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run docs:typecheck && npm run test:contracts && npm test && npm run test:ui && npm run test:recovery && npm run docs:build"
+    "check": "npm run typecheck && npm run docs:typecheck && npm run test:client && npm run test:contracts && npm test && npm run test:privacy-pools-v1 && npm run test:ui && npm run test:recovery && npm run docs:build"
   },
   "engines": {
     "node": ">=24.12.0"
@@ -41,10 +45,15 @@
     "@railgun-community/engine": "9.8.0",
     "circomlibjs": "0.1.7",
     "ethers": "6.17.0",
+    "poseidon-lite": "0.3.0",
+    "snarkjs": "0.7.5",
     "solc": "0.8.17"
   },
   "devDependencies": {
     "@types/node": "24.19.0",
+    "@types/snarkjs": "0.7.9",
+    "esbuild": "0.25.12",
+    "playwright": "1.63.0",
     "typescript": "7.0.2"
   },
   "overrides": {

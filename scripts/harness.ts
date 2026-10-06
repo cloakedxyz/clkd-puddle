@@ -35,7 +35,7 @@ const poseidonSource = 'railgun/contracts/logic/Poseidon.sol';
 export function compile(includeTestContracts = false): CompiledContracts {
   ensureUpstream();
   const sources: Record<string, { content: string }> = {};
-  for (const file of ['contracts/DepositBase.sol', 'contracts/DepositFactory.sol', 'contracts/protocols/RailgunDeposit.sol', 'contracts/protocols/PrivacyPoolsDeposit.sol', 'test/contracts/DemoToken.sol']) {
+  for (const file of ['contracts/DepositBase.sol', 'contracts/DepositFactory.sol', 'contracts/protocols/RailgunDeposit.sol', 'contracts/protocols/PrivacyPoolsDeposit.sol', 'contracts/protocols/PrivacyPoolsV1Deposit.sol', 'test/contracts/DemoToken.sol']) {
     sources[file] = { content: readFileSync(`${root}${file}`, 'utf8') };
   }
   if (includeTestContracts) {
@@ -86,7 +86,7 @@ export const FORK: Omit<ForkConfig, 'block'> = {
   token: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
 };
 
-async function startChain(fork?: ForkConfig) {
+export async function startChain(fork?: ForkConfig) {
   const port = await new Promise<number>((resolve, reject) => {
     const server = createServer();
     server.on('error', reject);
