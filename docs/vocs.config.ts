@@ -2,6 +2,7 @@ import { defineConfig } from 'vocs/config';
 import { brand } from '../scripts/brand.ts';
 
 export default defineConfig({
+  basePath: process.env.PUDDLE_SITE === '1' ? '/docs' : '/',
   title: brand.name,
   description: 'Fund private balances with an ordinary token transfer.',
   iconUrl: '/icon.svg',
@@ -17,7 +18,7 @@ export default defineConfig({
     { text: 'Contracts & security', link: '/contracts' },
   ],
   topNav: [
-    { text: 'App', link: 'http://127.0.0.1:5173', external: true },
+    { text: 'App', link: process.env.PUDDLE_SITE === '1' ? '/' : 'http://127.0.0.1:5173', external: true },
     { text: 'GitHub', link: brand.repository, external: true },
   ],
 });

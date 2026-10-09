@@ -1,4 +1,5 @@
-import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { renderApp } from './html.ts';
 
@@ -13,3 +14,7 @@ for (const file of ['style.css', 'assets/metamask.svg', 'assets/rainbow.svg', 'a
   'assets/railgun.svg', 'assets/privacy-pools.svg']) {
   await copyFile(new URL(`../app/${file}`, import.meta.url), new URL(file, output));
 }
+execFileSync('npm', ['--prefix', 'docs', 'run', 'build'], {
+  stdio: 'inherit', env: { ...process.env, PUDDLE_SITE: '1' },
+});
+await cp(new URL('../docs/dist/public/', import.meta.url), new URL('docs/', output), { recursive: true });

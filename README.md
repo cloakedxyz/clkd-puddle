@@ -34,7 +34,8 @@ not open yet; the local test interface is excluded from the public build.
 
 Import `cloakedxyz/clkd-puddle` into Vercel as `clkd-puddle`, using the repository
 root and `main` as the production branch. `vercel.json` sets the install command,
-`npm run build:site` and the `dist` output directory. Use Node.js 24. Add `puddle.link`
+`npm run build:site` and the `dist` output directory. This builds the landing page
+at `/` and the docs at `/docs` in one project. Use Node.js 24. Add `puddle.link`
 in the project's Domains settings and apply the DNS records Vercel provides.
 No environment variables or wallet keys are needed for the landing page.
 

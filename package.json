@@ -36,7 +36,7 @@
     "test:privacy-pools-v1": "npm run recovery:build && node --test test/privacy-pools-v1/integration.test.ts",
     "demo": "node scripts/demo.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run docs:typecheck && npm run test:client && npm run test:contracts && npm test && npm run test:privacy-pools-v1 && npm run test:ui && npm run test:recovery && npm run test:site && npm run docs:build"
+    "check": "npm run typecheck && npm run docs:typecheck && npm run test:client && npm run test:contracts && npm test && npm run test:privacy-pools-v1 && npm run test:ui && npm run test:recovery && npm run test:site"
   },
   "engines": {
     "node": ">=24.12.0"
