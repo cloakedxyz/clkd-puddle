@@ -38,7 +38,7 @@ export interface AppState {
   pool: string;
   factory: string;
   privateBalance: string;
-  v1: { chainId: string; factory: string; pool: string; token: string; feeRecipient: string };
+  v1?: { chainId: string; factory: string; pool: string; token: string; feeRecipient: string };
   deposit: DepositView | null;
 }
 

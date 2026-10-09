@@ -15,7 +15,14 @@ contracts remain unaudited and need live validation.
 
 ## First release
 
-Start with RAILGUN on Arbitrum, one supported token and same-chain deposits.
+Start with RAILGUN on Ethereum, WETH and same-chain deposits. This follows the
+largest network and token balances in [RAILGUN's TVL data](https://defillama.com/protocol/railgun)
+checked on 9 October 2026. WETH transfers are supported by the current token
+adapter; native ETH wrapping is separate work.
+
+Host the public landing page on Vercel from `main`. Deposits stay closed until the
+live service and the validation below are complete. Privacy Pools v1 and v2 are
+marked coming soon; the existing v1 experiment remains available locally.
 
 - **Validate the full journey.** Test the current contracts with wallet receipt,
   private spending, protocol screening and owner recovery while our server is offline.

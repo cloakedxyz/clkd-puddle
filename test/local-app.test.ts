@@ -71,6 +71,32 @@ test('rejects malformed amounts and does not create or fund a deposit on invalid
   assert.equal((await current()).deposit, null);
 });
 
+test('launch preview offers only RAILGUN and cannot enable Privacy Pools through a receive link', async () => {
+  assert.equal((await current()).v1, undefined);
+  const rejected = await post('/api/deposits', { protocol: 'privacy-pools-v1', amount: '100' });
+  assert.equal(rejected.status, 400);
+  assert.match((await rejected.json() as { error: string }).error, /coming soon/);
+  const browser = await chromium.launch(process.platform === 'darwin' ? { channel: 'chrome' } : {});
+  try {
+    const page = await browser.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(app.url + '/receive#request=old-public-code');
+    await page.locator('#deposit-form').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#protocol').inputValue(), 'railgun');
+    assert.deepEqual(await page.locator('#protocol option:enabled').allTextContents(), ['RAILGUN']);
+    assert.deepEqual(await page.locator('#protocol option:disabled').allTextContents(), [
+      'Privacy Pools v1 — Coming soon', 'Privacy Pools v2 — Coming soon',
+    ]);
+    assert.match(await page.locator('.coming-soon').innerText(), /Privacy Pools v1 & v2\s+Coming soon/);
+    assert.equal(await page.locator('#v1-code-field').isVisible(), false);
+    assert.match(await page.locator('#error').innerText(), /coming soon/);
+    assert.equal(new URL(page.url()).hash, '');
+    assert.deepEqual(errors, []);
+    assert.equal((await current()).deposit, null);
+  } finally { await browser.close(); }
+});
+
 test('creates, funds, relays and decrypts real local deposits; duplicate and stale actions cannot send twice', async () => {
   const created = await post('/api/deposits', { protocol: 'railgun', amount: '100' });
   assert.equal(created.status, 201);
@@ -122,13 +148,16 @@ test('creates, funds, relays and decrypts real local deposits; duplicate and sta
   assert.equal(final.privateBalance, String(99_450_750n + expected));
 });
 
-test('browser accepts only a wallet public code, manually relays and accepts a wallet-generated recovery proof', { timeout: 120_000 }, async () => {
+test('opt-in experiment accepts only a wallet public code, manually relays and accepts a wallet-generated recovery proof', { timeout: 180_000 }, async () => {
+  await app.close();
+  app = await startLocalApp(0, { experimentalV1: true });
   const connection = new FetchRequest(app.url + '/api/rpc');
   connection.setHeader('Origin', app.url);
   const provider = new JsonRpcProvider(connection, 31337, { batchMaxCount: 1, cacheTimeout: -1 });
   const browser = await chromium.launch(process.platform === 'darwin' ? { channel: 'chrome' } : {});
   try {
     const configuration = await current();
+    assert(configuration.v1);
     const block = await provider.getBlock('latest');
     assert(block);
     // Separate wallet fixture. No secrets are generated, imported or displayed in the Puddle browser.

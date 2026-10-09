@@ -24,8 +24,10 @@ Fund your private wallet, receive payments, or accept payouts from apps that sen
 ## Try it locally
 
 Run `npm run dev` from the repository and open the [app](http://127.0.0.1:5173).
-The web demo supports RAILGUN and Privacy Pools v1. It supplies test funds and has a
-separate **Relay deposit manually** step. V1 accepts a public receive code from the
+RAILGUN is the first website release; Privacy Pools v1 and v2 are **coming soon**.
+The local preview supplies test USDC and has a separate **Relay deposit manually**
+step. Developers can enable the v1 experiment with
+`PUDDLE_EXPERIMENTAL_V1=1 npm run dev`. V1 accepts a public receive code from the
 recipient wallet; its secrets stay there. Save the Puddle recovery file before
 funding. You can recover before relaying; a pool exit needs a proof from the
 receiving wallet or the separate recovery tool. Nothing is sent to a public

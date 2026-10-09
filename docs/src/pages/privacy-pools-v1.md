@@ -76,6 +76,8 @@ does not automatically grant the sender refund rights. Initial funding is public
 
 ## Local UI testing
 
+Privacy Pools v1 is coming soon to the website. For development testing, start the
+opt-in experiment with `PUDDLE_EXPERIMENTAL_V1=1 npm run dev`.
 Choose Privacy Pools v1, paste a code for the demo's chain and pool, then choose the
 matching ETH or USDC asset and amount. Save the recovery file before funding.
 **Relay deposit manually** moves the funded balance into the pool. Before that,

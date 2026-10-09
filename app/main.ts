@@ -17,9 +17,15 @@ const selectedProtocol = () => protocolSelect.value as DemoProtocol;
 const selectedAsset = () => assetSelect.value as DemoAsset;
 const provider = new JsonRpcProvider(`${location.origin}/api/rpc`, 31337, { batchMaxCount: 1, cacheTimeout: -1 });
 const receiveCode = element<HTMLTextAreaElement>('v1-receive-code');
+let state: AppState | undefined;
 function consumeReceiveLink() {
-  if (!location.hash) return false;
+  if (!location.hash || !state) return false;
   const params = new URLSearchParams(location.hash.slice(1));
+  if (params.has('request') && !state.v1) {
+    history.replaceState(null, '', location.pathname + location.search);
+    message('Privacy Pools v1 is coming soon. This preview supports RAILGUN.');
+    return false;
+  }
   if (params.has('request')) {
     receiveCode.value = location.href;
     protocolSelect.value = 'privacy-pools-v1';
@@ -34,77 +40,6 @@ function consumeReceiveLink() {
   history.replaceState(null, '', location.pathname + location.search);
   return params.has('request');
 }
-consumeReceiveLink();
-const menu = element<HTMLDetailsElement>('site-menu');
-const menuToggle = element('menu-toggle');
-
-document.addEventListener('click', event => {
-  if (event.target instanceof Node && !menu.contains(event.target)) menu.open = false;
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && menu.open) {
-    menu.open = false;
-    menuToggle.focus();
-  }
-});
-menu.addEventListener('focusout', event => {
-  if (event.relatedTarget instanceof Node && !menu.contains(event.relatedTarget)) menu.open = false;
-});
-menu.addEventListener('click', event => {
-  if (event.target instanceof Element && event.target.closest('a')) {
-    menu.open = false;
-    menuToggle.focus();
-  }
-});
-
-// Same blur/slide rhythm as clkd's hero, with a stable width for both logos.
-function startProtocolRotation() {
-  const protocols = element('protocols');
-  const links = Array.from(protocols.querySelectorAll<HTMLAnchorElement>('a'));
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  let current = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  function show(index: number) {
-    links[current]!.dataset.state = 'outgoing';
-    current = index;
-    links[current]!.dataset.state = 'active';
-  }
-
-  function schedule() {
-    clearTimeout(timer);
-    if (reducedMotion.matches || document.hidden
-        || protocols.matches(':hover, :focus-within')) return;
-    timer = setTimeout(() => {
-      show((current + 1) % links.length);
-      schedule();
-    }, 2_800);
-  }
-
-  function configure() {
-    protocols.toggleAttribute('data-rotating', !reducedMotion.matches);
-    for (const [index, link] of links.entries()) {
-      link.dataset.state = index === current ? 'active' : 'idle';
-    }
-    schedule();
-  }
-
-  protocols.addEventListener('pointerenter', () => clearTimeout(timer));
-  protocols.addEventListener('pointerleave', schedule);
-  protocols.addEventListener('focusin', event => {
-    clearTimeout(timer);
-    // Both links remain keyboard-accessible; focus reveals its destination.
-    const index = links.findIndex(link => link === event.target);
-    if (index >= 0) show(index);
-  });
-  protocols.addEventListener('focusout', () => queueMicrotask(schedule));
-  document.addEventListener('visibilitychange', schedule);
-  reducedMotion.addEventListener('change', configure);
-  configure();
-}
-startProtocolRotation();
-
-let state: AppState | undefined;
 let editing = true;
 let submitting = false;
 let connected = false;
@@ -182,7 +117,15 @@ function render() {
   form.hidden = !editing;
   element('deposit-panel').hidden = editing;
   const recipient = element<HTMLOutputElement>('recipient');
+  const v1Option = protocolSelect.querySelector<HTMLOptionElement>('[value="privacy-pools-v1"]')!;
+  v1Option.disabled = !state.v1;
+  v1Option.textContent = state.v1 ? 'Privacy Pools v1 · Experimental' : 'Privacy Pools v1 — Coming soon';
+  if (!state.v1 && selectedProtocol() !== 'railgun') {
+    protocolSelect.value = 'railgun';
+    assetSelect.value = 'USDC';
+  }
   const v1Selected = selectedProtocol() === 'privacy-pools-v1';
+  assetSelect.querySelector<HTMLOptionElement>('[value="ETH"]')!.disabled = !v1Selected;
   recipient.value = `${state.recipient.slice(0, 10)}…${state.recipient.slice(-8)}`;
   recipient.title = state.recipient;
   recipient.setAttribute('aria-label', recipient.value);
@@ -289,7 +232,8 @@ form.addEventListener('submit', event => {
   else void createV1();
 });
 async function createV1() {
-  if (submitting || !state) return;
+  if (!state?.v1) { message('Privacy Pools v1 is coming soon. Choose RAILGUN.'); return; }
+  if (submitting) return;
   submitting = true; actionVersion++; message(''); render();
   try {
     const code = parseV1ReceiveCode(receiveCode.value.trim());
@@ -351,7 +295,8 @@ async function poll() {
       const next = await request('/api/state');
       // A poll started before an action must not replace the action's newer response.
       if (version !== actionVersion) return;
-      if (!state) editing = !!receiveCode.value || !next.deposit;
+      const firstLoad = !state;
+      if (firstLoad) editing = !next.deposit;
       if (state && state.recipient !== next.recipient) {
         savedRecoveries.clear();
         editing = !next.deposit;
@@ -360,6 +305,7 @@ async function poll() {
       state = next;
       if (!connected) message('');
       connected = true;
+      if (firstLoad && consumeReceiveLink()) editing = true;
     }
   } catch {
     connected = false;

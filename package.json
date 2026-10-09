@@ -18,6 +18,8 @@
     "docs:build": "npm --prefix docs run build",
     "docs:typecheck": "tsc --noEmit -p docs/tsconfig.json",
     "build:ui": "tsc -p app/tsconfig.json && node scripts/build-version.ts",
+    "build:site": "tsc -p app/tsconfig.json && node scripts/build-site.ts",
+    "test:site": "npm run build:site && node --test test/site.test.ts",
     "test:ui": "npm run build:ui && npm run recovery:build && node --test test/local-app.test.ts",
     "recovery:build": "tsc -p app/tsconfig.json && tsc -p recovery/tsconfig.json && node scripts/build-recovery.ts",
     "recovery:dev": "npm run recovery:build && node scripts/serve-recovery.ts",
@@ -34,7 +36,7 @@
     "test:privacy-pools-v1": "npm run recovery:build && node --test test/privacy-pools-v1/integration.test.ts",
     "demo": "node scripts/demo.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run docs:typecheck && npm run test:client && npm run test:contracts && npm test && npm run test:privacy-pools-v1 && npm run test:ui && npm run test:recovery && npm run docs:build"
+    "check": "npm run typecheck && npm run docs:typecheck && npm run test:client && npm run test:contracts && npm test && npm run test:privacy-pools-v1 && npm run test:ui && npm run test:recovery && npm run test:site && npm run docs:build"
   },
   "engines": {
     "node": ">=24.12.0"

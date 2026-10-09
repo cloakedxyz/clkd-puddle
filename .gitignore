@@ -1,5 +1,7 @@
 node_modules/
 .cache/
+dist/
+.vercel/
 docs/.vocs/
 docs/.waku/
 docs/dist/

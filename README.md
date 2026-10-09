@@ -17,14 +17,31 @@ Send to a `0x` deposit address; a relayer handles the pool deposit.
 
 ## Supported protocols
 
-| Protocol | Contracts & SDK | Web demo |
-| --- | :---: | :---: |
-| [RAILGUN](https://railgun.org/) | ✅ | ✅ |
-| [Privacy Pools v2](docs/src/pages/privacy-pools.md) | ✅ | — |
-| [Privacy Pools v1](docs/src/pages/privacy-pools-v1.md) | ✅ | ✅ |
+| Protocol | Contracts & SDK | Website release |
+| --- | :---: | --- |
+| [RAILGUN](https://railgun.org/) | ✅ | First release · local preview available |
+| [Privacy Pools v1](docs/src/pages/privacy-pools-v1.md) | ✅ | Coming soon |
+| [Privacy Pools v2](docs/src/pages/privacy-pools.md) | ✅ | Coming soon |
 
 All integrations are tested locally. The standalone recovery tool supports all three,
 including the v1 public pool exit.
+
+## Public website
+
+The first real-deposit route is **RAILGUN, WETH, Ethereum**. The public landing page
+shows this launch plan and marks Privacy Pools v1 and v2 coming soon. Deposits are
+not open yet; the local test interface is excluded from the public build.
+
+Import `cloakedxyz/clkd-puddle` into Vercel as `clkd-puddle`, using the repository
+root and `main` as the production branch. `vercel.json` sets the install command,
+`npm run build:site` and the `dist` output directory. Use Node.js 24. Add `puddle.link`
+in the project's Domains settings and apply the DNS records Vercel provides.
+No environment variables or wallet keys are needed for the landing page.
+
+Vercel's GitHub integration deploys pushes to `main` and creates branch previews.
+GitHub Actions runs the tests; no separate deployment action or Vercel token is
+needed in GitHub. Run `npm run test:site` to check the public build locally.
+The real-deposit service remains separate work tracked in [the roadmap](ROADMAP.md).
 
 ## Run locally
 
@@ -40,12 +57,15 @@ npm run dev
 
 [App](http://127.0.0.1:5173) · [Docs](http://127.0.0.1:5174) · [Recovery](http://127.0.0.1:5175)
 
-Choose RAILGUN (test USDC) or Privacy Pools v1 (test ETH or USDC). Save the recovery
-file, send test funds, then press **Relay deposit manually**. Before relaying, funds
-can be recovered from the receiving address. V1 also supports a public pool exit.
-The v1 demo accepts a public receive code or link from the recipient wallet. It never
-generates or imports the wallet’s secrets. Codes must match the demo’s local chain
-and pool. Use the Sepolia page below for Cloaked's Sepolia export.
+The landing page previews RAILGUN with test USDC. Privacy Pools v1 and v2 are marked
+**Coming soon**. Save the recovery file, send test funds, then press **Relay deposit
+manually**. Before relaying, funds can be recovered from the receiving address.
+
+Developers can opt into the existing Privacy Pools v1 experiment with
+`PUDDLE_EXPERIMENTAL_V1=1 npm run dev`. It accepts a public receive code from a
+recipient wallet for the demo's local chain and pool, and supports a public pool
+exit. It never generates or imports the wallet's secrets. Use the Sepolia page
+below for Cloaked's Sepolia export.
 Restarting clears the local chain. Use `npm run demo` for a terminal-only run.
 
 ## Sepolia with Cloaked

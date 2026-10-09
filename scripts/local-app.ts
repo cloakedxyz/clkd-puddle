@@ -37,20 +37,20 @@ async function readBody(request: IncomingMessage): Promise<Record<string, unknow
   } catch { throw new RequestError('Expected a JSON object.'); }
 }
 
-export async function startLocalApp(port = 5173) {
+export async function startLocalApp(port = 5173, options: { experimentalV1?: boolean } = {}) {
   // A fresh isolated chain and test identity on every start. No live RPC or signing keys.
   const env = await createEnvironment();
   try {
     assert.equal(await env.pool.shieldFee(), 25n, 'Local quote must match the pool fee');
     const recipient = await createRecipient();
-    const v1 = await createV1Environment(compileV1(), env.provider);
+    const v1 = options.experimentalV1 ? await createV1Environment(compileV1(), env.provider) : undefined;
     const state: AppState = {
       recipient: recipient.address, recovery: await env.recovery.getAddress(),
       relayer: await env.relayer.getAddress(), feeRecipient: await env.feeCollector.getAddress(),
       token: await env.token.getAddress(), pool: await env.pool.getAddress(),
       factory: await env.factory.getAddress(), privateBalance: '0', deposit: null,
-      v1: { chainId: '31337', factory: await v1.factory.getAddress(), pool: await v1.entrypoint.getAddress(),
-        token: await v1.token.getAddress(), feeRecipient: await v1.fees.getAddress() },
+      ...(v1 ? { v1: { chainId: '31337', factory: await v1.factory.getAddress(), pool: await v1.entrypoint.getAddress(),
+        token: await v1.token.getAddress(), feeRecipient: await v1.fees.getAddress() } } : {}),
     };
     let prepared: PreparedDeposit | PrivacyPoolsV1Deposit | undefined;
     let shieldReceipt: TransactionReceipt | undefined;
@@ -74,8 +74,8 @@ export async function startLocalApp(port = 5173) {
       const gasFee = BigInt(state.deposit.quote.gasFee);
       if (!shieldReceipt) {
         state.deposit.phase = 'shielding';
-        shieldReceipt = prepared.protocol === 'railgun' ? await settle(env, prepared, gasFee)
-          : await mined(relayDeposit(v1.adapter, prepared, v1.relayer));
+        if (prepared.protocol === 'railgun') shieldReceipt = await settle(env, prepared, gasFee);
+        else { assert(v1); shieldReceipt = await mined(relayDeposit(v1.adapter, prepared, v1.relayer)); }
         state.deposit.shieldingTx = shieldReceipt.hash;
       }
       state.deposit.phase = 'verifying';
@@ -111,6 +111,7 @@ export async function startLocalApp(port = 5173) {
       ['/style.css', ['app/style.css', 'text/css']],
       ['/main.js', ['.cache/ui/main.js', 'text/javascript']],
       ['/theme.js', ['.cache/ui/theme.js', 'text/javascript']],
+      ['/site.js', ['.cache/ui/site.js', 'text/javascript']],
       ['/shared.js', ['.cache/ui/shared.js', 'text/javascript']],
       ['/assets/metamask.svg', ['app/assets/metamask.svg', 'image/svg+xml']],
       ['/assets/rainbow.svg', ['app/assets/rainbow.svg', 'image/svg+xml']],
@@ -199,7 +200,10 @@ export async function startLocalApp(port = 5173) {
       if (busy) throw new RequestError('A deposit action is already running.', 409);
       if (path === '/api/deposits') {
         if (body.protocol !== undefined && body.protocol !== 'railgun' && body.protocol !== 'privacy-pools-v1') {
-          throw new RequestError('Choose RAILGUN or Privacy Pools v1.');
+          throw new RequestError('Choose an available private destination.');
+        }
+        if (body.protocol === 'privacy-pools-v1' && !v1) {
+          throw new RequestError('Privacy Pools v1 is coming soon. Choose RAILGUN.');
         }
         if (Object.keys(body).some(key => !['protocol', 'amount', 'asset', 'recoveryFile'].includes(key))) {
           throw new RequestError('Unexpected deposit fields. Keep private note backups on your device.');
@@ -221,6 +225,7 @@ export async function startLocalApp(port = 5173) {
               { amount: BigInt(quote.amount), gasFee: BigInt(quote.gasFee) });
           } else {
             try {
+              assert(v1 && state.v1);
               const file = parseRecoveryFile(JSON.stringify(body.recoveryFile));
               assert.equal(file.protocol, 'privacy-pools-v1');
               assert.equal(file.config.recovery, state.recovery);
@@ -252,10 +257,13 @@ export async function startLocalApp(port = 5173) {
           const amount = BigInt(deposit.quote.amount);
           let receipt;
           if (deposit.protocol === 'railgun') receipt = await fund(env, deposit.address, amount);
-          else if (deposit.asset === 'ETH') receipt = await mined(v1.sender.sendTransaction({ to: deposit.address, value: amount }));
           else {
-            await mined(v1.token.getFunction('mint')(await v1.sender.getAddress(), amount));
-            receipt = await mined(v1.token.connect(v1.sender).getFunction('transfer')(deposit.address, amount));
+            assert(v1);
+            if (deposit.asset === 'ETH') receipt = await mined(v1.sender.sendTransaction({ to: deposit.address, value: amount }));
+            else {
+              await mined(v1.token.getFunction('mint')(await v1.sender.getAddress(), amount));
+              receipt = await mined(v1.token.connect(v1.sender).getFunction('transfer')(deposit.address, amount));
+            }
           }
           deposit.fundingTx = receipt.hash;
           assert.equal(await env.provider.getCode(deposit.address), '0x');
@@ -273,7 +281,8 @@ export async function startLocalApp(port = 5173) {
         runTask(async () => {
           assert(prepared);
           const owner = await env.recovery.getAddress();
-          const adapter = prepared.protocol === 'railgun' ? env.adapter : v1.adapter;
+          const adapter = prepared.protocol === 'railgun' ? env.adapter : v1?.adapter;
+          assert(adapter);
           // A fresh address needs deployment first; an existing one can recover immediately.
           const deployed = await env.provider.getCode(prepared.address) !== '0x';
           let receipt = await mined(env.recovery.sendTransaction(await recoveryTransaction(
@@ -288,7 +297,7 @@ export async function startLocalApp(port = 5173) {
         });
         return sendState(202);
       }
-      if (path === '/api/pool-recovery' && prepared.protocol === 'privacy-pools-v1'
+      if (path === '/api/pool-recovery' && v1 && prepared.protocol === 'privacy-pools-v1'
         && deposit.phase === 'complete') {
         if (Object.keys(body).some(key => !['address', 'data'].includes(key)) || typeof body.data !== 'string') {
           throw new RequestError('Provide only the public recovery proof.');
@@ -340,7 +349,9 @@ export async function startLocalApp(port = 5173) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   console.log(`Starting ${brand.name} on a fresh local test chain…`);
-  const app = await startLocalApp(Number(process.env.PORT ?? 5173));
+  const app = await startLocalApp(Number(process.env.PORT ?? 5173), {
+    experimentalV1: process.env.PUDDLE_EXPERIMENTAL_V1 === '1',
+  });
   console.log(`${brand.name} is ready at ${app.url} — local test funds only.`);
   const stop = () => { void app.close().then(() => process.exit(0)); };
   process.once('SIGINT', stop);
