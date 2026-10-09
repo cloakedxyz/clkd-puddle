@@ -5,7 +5,7 @@ outline: false
 
 # Privacy Pools v1
 
-**Coming soon to Puddle.** RAILGUN is the first planned public release.
+**Coming soon to Puddle.**
 
 Ordinary ETH or token transfer → Puddle receive address → recipient-owned v1 note.
 Contracts, a client SDK, a manual-relay web demo and independent recovery are available for development.
@@ -102,7 +102,7 @@ recovery wallet recovers funds. Save and share the public recovery file before f
 Reloading that file restores receive-address recovery, not an expired relay quote.
 
 The public deployment configuration is in `deployments/sepolia.json`. A real Sepolia
-deposit was recognised by Cloaked, approved and [publicly recovered to its fixed wallet](https://sepolia.etherscan.io/tx/0xc3db82807d800a8b7506002361169b0f8f5382792ce59e1ed2730df412db31a7).
+deposit was recognised by Cloaked and [publicly recovered to its fixed wallet](https://sepolia.etherscan.io/tx/0xc3db82807d800a8b7506002361169b0f8f5382792ce59e1ed2730df412db31a7).
 Receive-address recovery is covered locally; a separate live test remains outstanding.
 Cloaked's secure UI currently handles pool recovery only. These tests do not establish
 production readiness.

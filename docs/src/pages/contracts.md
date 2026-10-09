@@ -70,6 +70,4 @@ Contract changes produce new CREATE2 addresses. Recovery uses one current file
 format for all three integrations, checked against the tool's own contract build. Old
 pre-release formats and mismatched factory code are rejected.
 
-The recipient confirmed wallet receipt in the first Arbitrum mainnet pilot on 29 September 2026. The revised contracts, cross-chain flow, private spending and production Proof-of-Innocence acceptance still need live validation.
-
 Use the GitHub link above to view the source.

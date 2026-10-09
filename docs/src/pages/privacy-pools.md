@@ -5,7 +5,7 @@ outline: false
 
 # Privacy Pools v2
 
-**Coming soon to Puddle.** RAILGUN is the first planned public release.
+**Coming soon to Puddle.**
 
 Ordinary token transfer → Puddle deposit address → recipient's Privacy Pools balance.
 The adapter is part of the main contracts and SDK. The web demo currently uses RAILGUN.
@@ -31,12 +31,7 @@ The proof fixes the token and private amount. A new gas quote can reuse the same
 address and proof if the gross amount changes to preserve the net pool deposit.
 A different private deposit needs a new proof and address. Each address executes once.
 
-## API shape
-
-The production REST API and background processing are not built yet. The intended
-input is a chain, supported token, desired private amount, registered recipient
-and user-owned recovery address. The server needs the SDK, proof files, pool settings,
-a blockchain connection and its funded relayer wallet.
+## SDK flow
 
 ```ts
 // Protocol-specific preparation, using the recipient's public key.
@@ -57,10 +52,6 @@ const tx = await relayDeposit(privacyPools, execution, relayerWallet);
 Amounts are integer token units. Total sent covers the private amount, the pool's
 configured fee, Puddle's 0.1% and a capped gas charge. Puddle fees are collected only
 when the pool deposit succeeds.
-
-The UI follows the same sequence: enter details → review and save recovery data →
-send → track the deposit and screening. A sending-wallet connection is optional
-for an ordinary transfer. Registration and wallet backup happen first.
 
 ## Failures and recovery
 
