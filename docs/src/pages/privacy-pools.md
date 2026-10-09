@@ -5,6 +5,8 @@ outline: false
 
 # Privacy Pools v2
 
+**Coming soon to Puddle.** RAILGUN is the first planned public release.
+
 Ordinary token transfer → Puddle deposit address → recipient's Privacy Pools balance.
 The adapter is part of the main contracts and SDK. The web demo currently uses RAILGUN.
 **Unaudited; tested locally, not deployed for production.**
@@ -20,7 +22,7 @@ The adapter is part of the main contracts and SDK. The web demo currently uses R
 4. The relayer deploys the address and deposits in one transaction. The recipient's
    wallet discovers the note; screening approval is needed for private spending.
 
-Both protocols use the same Puddle fee policy, quote, execution and recovery code.
+All three adapters use the same Puddle fee policy, quote, execution and recovery code.
 The Privacy Pools adapter only checks the committed deposit call. The shared
 executor approves the quoted token and requires the pool to consume the exact net
 amount. A mismatch reverts the whole transaction, including fees.
@@ -80,7 +82,7 @@ Recovery is public; reusing its owner address links deposits.
 
 ## Tests
 
-Both adapters run in the root Solidity unit, fuzz and transaction-sequence suite:
+All three adapters run in the root Solidity unit, fuzz and transaction-sequence suite:
 
 ```sh
 npm run setup:contracts

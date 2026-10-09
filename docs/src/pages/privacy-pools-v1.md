@@ -5,8 +5,10 @@ outline: false
 
 # Privacy Pools v1
 
+**Coming soon to Puddle.** RAILGUN is the first planned public release.
+
 Ordinary ETH or token transfer → Puddle receive address → recipient-owned v1 note.
-Contracts, a client SDK, a manual-relay web demo and independent recovery are available.
+Contracts, a client SDK, a manual-relay web demo and independent recovery are available for development.
 **Unaudited; local and Sepolia testing only.**
 
 ## Preparing to receive

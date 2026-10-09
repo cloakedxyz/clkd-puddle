@@ -7,6 +7,8 @@ outline: false
 
 Only the fixed recovery wallet can withdraw unshielded funds. The relayer's permission is not required.
 
+The recovery tool is available for local testing. A public recovery page is coming soon.
+
 Save the recovery file before funding a deposit. It contains the configuration,
 salt, chain and factory address; no private keys. Keep it private.
 
@@ -21,8 +23,8 @@ the balance. The file is not uploaded. You can also run the tool yourself with
 
 The tool checks the deposit address, factory, fixed implementation and any deployed
 clone against its own contract build. The current format supports RAILGUN and both
-Privacy Pools versions; old pre-release formats and unknown versions are rejected. The demo
-uses a local chain and test recovery wallet; the public recovery site is not deployed yet.
+Privacy Pools versions; old pre-release formats and unknown versions are rejected.
+The demo uses a local chain and test recovery wallet.
 
 Recovery also works for partial deposits, wrong tokens and transfers received after shielding. Use `recoverNative()` for native currency accidentally sent before deployment or forcibly received.
 

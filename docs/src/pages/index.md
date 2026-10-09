@@ -5,30 +5,25 @@ outline: false
 
 # How it works
 
-Send tokens to a normal Ethereum address. The relayer deposits them into your RAILGUN or Privacy Pools private balance.
+Fund your private RAILGUN balance with an ordinary token transfer.
 
-1. Choose a recipient, user-owned recovery wallet, token and amount.
-2. Create a deposit address and review the fee quote.
-3. Send tokens to the address. The relayer collects fees and deposits into the pool.
+**Coming soon:** RAILGUN on Ethereum, using WETH (the token form of ETH).
+Public deposits aren't open yet.
+[Privacy Pools v1](/privacy-pools-v1) and [v2](/privacy-pools) are planned for later.
 
-CREATE2 lets the contract's address be calculated before deployment. Its recipient,
-recovery rights and factory fee rules cannot change. Quotes are separate from address
-creation. RAILGUN permits changing token and amount; [Privacy Pools](/privacy-pools)
-must preserve the private deposit prepared in its proof. Each address executes once;
-excess funds remain recoverable.
+1. Enter your RAILGUN address and choose a recovery wallet you control.
+2. Review your deposit address and fees, then save the recovery file.
+3. Send WETH on Ethereum. Puddle's relayer submits the deposit into RAILGUN for you.
 
-## Use cases
-
-Fund your private wallet, receive payments, or accept payouts from apps that send ordinary token transfers.
+Your initial transfer remains public. Each address deposits once; excess funds
+remain recoverable. See [fees](/fees), [recovery](/recovery) and
+[contracts & security](/contracts) for the details. The contracts are unaudited.
 
 ## Try it locally
 
 Run `npm run dev` from the repository and open the [app](http://127.0.0.1:5173).
-RAILGUN is the first website release; Privacy Pools v1 and v2 are **coming soon**.
-The local preview supplies test USDC and has a separate **Relay deposit manually**
-step. Developers can enable the v1 experiment with
-`PUDDLE_EXPERIMENTAL_V1=1 npm run dev`. V1 accepts a public receive code from the
-recipient wallet; its secrets stay there. Save the Puddle recovery file before
-funding. You can recover before relaying; a pool exit needs a proof from the
-receiving wallet or the separate recovery tool. Nothing is sent to a public
-network. Privacy Pools v2 remains covered by a separate integration test suite.
+The RAILGUN demo supplies test USDC and uses a **Relay deposit manually** step.
+It runs on a local chain; nothing is sent to a public network. Save the recovery
+file before funding so you can also try recovering a deposit before it enters the pool.
+
+The Privacy Pools guides cover their separate development tests.

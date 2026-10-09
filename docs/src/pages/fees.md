@@ -5,7 +5,10 @@ outline: false
 
 # Fees
 
-The service charges **0.1% of the quoted deposit amount**, rounded down, plus a gas charge in the deposit token. The selected pool's own fee also applies. Any excess balance stays recoverable.
+The current contracts charge **0.1% of the quoted deposit amount**, rounded down, plus a gas charge in the deposit token. The selected pool's own fee also applies. Any excess balance stays recoverable.
+
+Public deposits are coming soon. Launch gas limits have not been chosen; the USDC
+example below uses local test tokens, not a live quote.
 
 The factory fixes each supported token's ceiling:
 
@@ -26,10 +29,10 @@ designated relayer. Neither mechanism proves the user accepted an exact quote.
 Apps should distinguish the estimated charge from the enforced maximum. Funding
 still needs only an ordinary transfer, with no token approval or extra signature.
 
-Privacy Pools quotes must preserve the net amount in the prepared deposit proof.
+Privacy Pools v2 quotes must preserve the net amount in the prepared deposit proof.
 
-Production ceilings have not been chosen. The local factory uses a test allowance
-of 2 USDC plus 0.5%; the demo's actual gas charge is 0.2 USDC.
+The local factory uses a test allowance of 2 USDC plus 0.5%; the demo's actual gas
+charge is 0.2 USDC.
 
 ## Local example
 
