@@ -5,6 +5,7 @@
   "buildCommand": "npm run build:site",
   "outputDirectory": "dist",
   "cleanUrls": true,
+  "trailingSlash": true,
   "headers": [
     {
       "source": "/(.*)",
