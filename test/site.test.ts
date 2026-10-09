@@ -25,5 +25,6 @@ test('docs are published under the same site with their own asset paths', async 
   const fees = await readFile(new URL('../dist/docs/fees/index.html', import.meta.url), 'utf8');
   assert.match(fees, /Fees/);
   assert.match(fees, /\/docs\/assets\//);
+  assert.match(fees, /href="https:\/\/puddle\.link\/"/);
   assert.doesNotMatch(fees, /(?:src|href)="\/(?:assets|rsc)\//);
 });

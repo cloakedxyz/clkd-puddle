@@ -37,7 +37,9 @@ export function revisionBadge(className = '') {
   const commit = archiveCommit ?? git('rev-parse', '--verify', 'HEAD');
   if (commit !== undefined && !/^[a-f0-9]{40}$/i.test(commit)) throw new Error('BUILD_COMMIT must be a full Git commit hash.');
   const status = git('status', '--porcelain', '--untracked-files=normal');
-  const modified = status === undefined ? !archiveCommit : status.length > 0;
+  // Vercel may modify build files after checking out its immutable source commit.
+  const modified = process.env.VERCEL === '1' && archiveCommit ? false
+    : status === undefined ? !archiveCommit : status.length > 0;
   const label = commit ? `${commit.slice(0, 7)}${modified ? ' · dev' : ''}` : 'dev';
   const title = commit ? `Source commit ${commit}${modified ? ' — includes local changes' : ''}` : 'Development build — source revision unavailable';
   const attributes = `class="${escapeHTML(className)}" title="${escapeHTML(title)}"`;

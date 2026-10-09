@@ -18,7 +18,7 @@ export default defineConfig({
     { text: 'Contracts & security', link: '/contracts' },
   ],
   topNav: [
-    { text: 'App', link: process.env.PUDDLE_SITE === '1' ? '/' : 'http://127.0.0.1:5173', external: true },
+    { text: 'App', link: process.env.PUDDLE_SITE === '1' ? 'https://puddle.link/' : 'http://127.0.0.1:5173', external: true },
     { text: 'GitHub', link: brand.repository, external: true },
   ],
 });
