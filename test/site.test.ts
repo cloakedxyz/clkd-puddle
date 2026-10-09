@@ -11,7 +11,7 @@ test('public build makes the launch status clear and excludes local deposit tool
   const output = new URL('../dist/', import.meta.url);
   const html = await readFile(new URL('index.html', output), 'utf8');
   assert.match(html, /RAILGUN on Ethereum/);
-  assert.match(html, /Privacy Pools v1 &amp; v2/);
+  assert.match(html, /Privacy Pools v1 and v2 — Coming soon/);
   assert.match(html, /Coming soon/);
   assert.match(html, /Deposits aren’t open yet/);
   assert.match(html, /href="\/docs\/"/);

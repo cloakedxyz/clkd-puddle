@@ -88,7 +88,8 @@ test('launch preview offers only RAILGUN and cannot enable Privacy Pools through
     assert.deepEqual(await page.locator('#protocol option:disabled').allTextContents(), [
       'Privacy Pools v1 — Coming soon', 'Privacy Pools v2 — Coming soon',
     ]);
-    assert.match(await page.locator('.coming-soon').innerText(), /Privacy Pools v1 & v2\s+Coming soon/);
+    const upcoming = page.getByRole('link', { name: 'Privacy Pools v1 and v2 — Coming soon', exact: true });
+    assert.match(await upcoming.textContent() ?? '', /Privacy Pools\s*Coming soon/);
     assert.equal(await page.locator('#v1-code-field').isVisible(), false);
     assert.match(await page.locator('#error').innerText(), /coming soon/);
     assert.equal(new URL(page.url()).hash, '');
