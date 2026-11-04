@@ -26,19 +26,19 @@
     }
   ],
   "redirects": [
-    { "source": "/docs/contracts/:path*", "destination": "/docs/architecture/", "permanent": true },
+    { "source": "/docs/contracts/", "destination": "/docs/architecture/", "permanent": true },
     {
-      "source": "/docs/fees/:path*",
+      "source": "/docs/fees/",
       "destination": "/docs/architecture/#settlement",
       "permanent": true
     },
     {
-      "source": "/docs/privacy-pools-v1/:path*",
+      "source": "/docs/privacy-pools-v1/",
       "destination": "/docs/architecture/",
       "permanent": true
     },
     {
-      "source": "/docs/privacy-pools/:path*",
+      "source": "/docs/privacy-pools/",
       "destination": "/docs/architecture/",
       "permanent": true
     }

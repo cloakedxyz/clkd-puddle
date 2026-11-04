@@ -75,13 +75,18 @@ The superseded contracts, experiments and deployment manifests have been removed
   recipient wallet connection or manual relay action. This is local evidence only.
 - The website build includes the selected architecture, receiving/recovery guides
   and an SDK API reference checked against every public export. Desktop, dark-mode
-  and mobile layouts passed browser checks. Old protocol-guide URLs redirect to
-  the selected architecture.
+  and mobile layouts passed browser checks. Legacy protocol-guide redirects are
+  configured to point to the selected architecture.
 - A configured static receiving build used a direct RPC without a Puddle backend.
   In the browser, a separate operator session restored the saved file, prepared a
   fresh manual quote and shielded the funded account into real local RAILGUN. The
   intended recipient decrypted the note. Private input fields were excluded from
   published configuration. Live receiving still requires the approved deployments.
+- The final clean Ubuntu checkout passed all 35 checks and the separate SDK package
+  consumer installation in [GitHub Actions](https://github.com/cloakedxyz/clkd-puddle/actions/runs/41908723240).
+  The source migration merged through [PR #1](https://github.com/cloakedxyz/clkd-puddle/pull/1).
+  The updated [website docs](https://puddle.link/docs/) and [API reference](https://puddle.link/docs/api/)
+  are published. Live receiving remains disabled pending the new deployed route.
 
 ## Outstanding before public funds
 
@@ -95,5 +100,6 @@ The superseded contracts, experiments and deployment manifests have been removed
 5. Independently review the exact module, browser note encoder, dependencies and
    service; resolve findings and finalize namespace/tag before publication.
 
-No new live transactions, public deployment or npm publication have been performed
-as part of this migration. See [release preparation](docs/releasing.md).
+The website/docs update is published. No new live ZeroDev transactions or npm
+publication have been performed as part of this migration.
+See [release preparation](docs/releasing.md).
