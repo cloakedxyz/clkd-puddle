@@ -33,7 +33,7 @@
     "node": ">=24.12.0"
   },
   "devDependencies": {
-    "@noble/curves": "1.4.2",
+    "@noble/curves": "2.4.0",
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@railgun-community/engine": "9.8.0",
