@@ -65,7 +65,7 @@ The approved ten-transaction Arbitrum plan completed with a native debit of
 ## Website and bridge scope
 
 The [website](https://puddle.link) and [API reference](https://puddle.link/docs/api/)
-are published. The manual preview accepts 0.0001 WETH per receiving address on
+are published. The receiving interface accepts 0.0001 WETH per address on
 Arbitrum One. It saves recovery before revealing funding instructions and requires
 arranging with the operator before funding. It has no hosted signer or automatic
 service. Browser preparation against the real deployed route passed without signing
@@ -81,15 +81,16 @@ It did **not** prove Relay delivery, refunds or recorded source recovery ownersh
 The approved live bridge test delivered 0.000985477626940850 WETH on Arbitrum
 and shielded 0.000957093418940626 WETH to the intended private wallet. The Base
 depository event recorded the selected recovery owner. The recipient wallet discovered
-the new note; its screening is pending. The separate refund case has not been executed. Provider-assisted
+the new note and marked it **Synced** after screening. The separate refund case has
+not been executed. Provider-assisted
 bridge recovery is an accepted dependency; destination owner recovery remains independent
 of Puddle. See [bridge scope](docs/bridges.md).
 
 ## Remaining gates
 
-1. Confirm screening for the bridged deposit and complete its refund case. The
-   original same-chain deposit is marked Synced; no private spending transaction
-   has been sent.
+1. Complete the funded bridge refund case. Both the same-chain and bridged deposits
+   are marked Synced in the recipient wallet; no private spending transaction has
+   been sent.
 2. Complete funded bridge success, refund and failure checks before enabling a route.
 3. Independently review the exact executor, browser encoder, SDK and dependencies;
    resolve relevant findings before general availability.
