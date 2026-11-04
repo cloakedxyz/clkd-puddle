@@ -1,10 +1,14 @@
 # Security
 
-This ZeroDev + RAILGUN implementation is **unaudited**. Prefer local test funds.
-The website's small manual pilot requires arranging with the operator before funding;
-it is not a generally available deposit service.
-Reusing Kernel does not extend its audit coverage to Puddle's module, SDK or service.
-The old custom-contract pilot is not evidence for this implementation.
+Puddle uses ZeroDev Kernel for account ownership and a restricted module for RAILGUN
+deposits. Recovery belongs to the account owner; the operator can perform only the
+configured deposit action.
+
+## Review status
+
+Puddle's module, SDK and service have not undergone an independent security audit.
+Kernel's audit coverage does not extend to these components. Current verification
+evidence is recorded in [RELEASE.md](RELEASE.md).
 
 ## Trust boundaries
 

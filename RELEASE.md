@@ -1,7 +1,8 @@
 # Release status
 
-Selected architecture: **ZeroDev Kernel + RAILGUN**. The SDK candidate is
-`@cloakedxyz/puddle@0.1.0-rc.1`, unpublished and unaudited.
+Selected architecture: **ZeroDev Kernel + RAILGUN**. SDK version
+`@cloakedxyz/puddle@0.1.0-rc.1` is distributed as a repository build.
+Security review status is recorded in [SECURITY.md](SECURITY.md).
 
 An earlier live RAILGUN test used the retired custom contracts; it does not validate
 this implementation. The live ZeroDev evidence below comes from a separate test.
@@ -51,7 +52,7 @@ The approved ten-transaction Arbitrum plan completed with a native debit of
 - The owner recovered a small transfer from the counterfactual account before shielding.
 - The deposit emitted the exact intended encrypted recipient, token and value. The
   intended RAILGUN wallet independently discovered **0.00007471275 WETH** (displayed
-  as ETH). Screening is still pending in the wallet's standby period.
+  as ETH). The wallet subsequently marked this deposit **Synced** after screening.
 - The account ended with zero token balance and pool allowance; its deposit action
   was marked spent. The same owner recovered a later transfer.
 - Native and token balances reconciled with the receipts and charged fees. Private
@@ -77,14 +78,18 @@ These expired samples are not funding instructions.
 A separate two-case rehearsal transferred tokens on local chain copies, simulated
 solver delivery, then checked destination shielding and owner recovery after failure.
 It did **not** prove Relay delivery, refunds or recorded source recovery ownership.
-The funded bridge/refund test needs its own approval and Base funding. Provider-assisted
+The approved live bridge test delivered 0.000985477626940850 WETH on Arbitrum
+and shielded 0.000957093418940626 WETH to the intended private wallet. The Base
+depository event recorded the selected recovery owner. The recipient wallet discovered
+the new note; its screening is pending. The separate refund case has not been executed. Provider-assisted
 bridge recovery is an accepted dependency; destination owner recovery remains independent
 of Puddle. See [bridge scope](docs/bridges.md).
 
 ## Remaining gates
 
-1. Confirm screening and private spend readiness in the intended wallet. Discovery
-   and account recovery are confirmed; private spending has not been tested.
+1. Confirm screening for the bridged deposit and complete its refund case. The
+   original same-chain deposit is marked Synced; no private spending transaction
+   has been sent.
 2. Complete funded bridge success, refund and failure checks before enabling a route.
 3. Independently review the exact executor, browser encoder, SDK and dependencies;
    resolve relevant findings before general availability.

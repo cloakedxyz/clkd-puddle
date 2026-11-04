@@ -344,10 +344,14 @@ el('new-receive').addEventListener('click', () => void act(async () => {
   el('automatic-status').textContent = '';
   el('transaction-status').textContent = ''; render();
 }));
-el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo · test funds only'
-  : configuration.automaticRelay ? 'Receiving preview' : 'Receiving preview · manual deposit';
+el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo' : 'Private transfers';
 el('route-description').textContent = `${configuration.symbol} on ${configuration.chainName}. No wallet connection needed to create your address.`;
 el('asset-symbol').textContent = configuration.symbol;
+if (configuration.minAmount && configuration.minAmount === configuration.maxAmount) {
+  field('send-amount').value = formatUnits(configuration.minAmount, configuration.decimals);
+  el('amount-hint').textContent = `${format(BigInt(configuration.minAmount))} per receiving address.`;
+  el('amount-hint').hidden = false;
+}
 el('automatic-status').hidden = !configuration.automaticRelay;
 el('manual-deposit-note').hidden = configuration.mode === 'local' || !!configuration.automaticRelay;
 render();

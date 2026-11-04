@@ -1,56 +1,30 @@
-# Bridge scope
+# Relay quotes
 
-Use an existing provider rather than build a bridge. Relay is the initial candidate
-for a narrow matching-asset route, such as Base WETH → Arbitrum WETH, after the
-same-chain ZeroDev + RAILGUN flow is validated.
+The SDK provides helpers for Relay quotes. The website’s receiving flow accepts
+WETH directly on Arbitrum One; it does not initiate cross-chain transfers.
 
-| Provider | Fit for this release                                                                                                                                                                                    |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Relay    | The existing adapter uses strict, single-payment deposit addresses with explicit refund and recovery settings.                                                                                          |
-| Across   | Now offers persistent deposit addresses without a sender signature, but requires an API key with deposit-address permission and route-specific limits. No Across integration or funded test is present. |
+## SDK quote helpers
 
-Keep one provider in the initial release. Relay is the implementation candidate;
-Across is an alternative if its access, routes or recovery model prove a better fit.
-Every shield needs a fresh Kernel account. A persistent bridge address pointing at
-an already-used account would deliver funds that need owner recovery instead of
-another shield. The funded bridge test must use a new account, separate from the
-same-chain pilot.
+The SDK's optional `@cloakedxyz/puddle/relay` module builds and validates Relay
+quote requests. It does not execute bridge transfers, track delivery or process refunds.
+These helpers do not establish a verified bridge route.
 
-Enabled Relay routes require a server-side `RELAY_API_KEY` from a Dashboard App.
-The key is never sent to the browser or saved in recovery files. Relay documents
-authenticated `/quote/v2` requests as required; successful anonymous test quotes
-are not a production guarantee. End users do not need Relay accounts.
+`relayFundingRequest` requests a strict, single-use deposit address with fixed
+source/destination assets, destination account and refund/recovery owner.
+`validateRelayFundingQuote` checks the reported route, sender, recipient and minimum
+output. It ignores provider transaction calldata. `minimumMatchingAssetOutput`
+sets a floor of 98% of the input amount and raises it if needed to cover Puddle’s fee and gas reimbursement.
+The 2% limit applies to the bridge leg; Puddle and RAILGUN fees are separate.
 
-Provider-assisted recovery while funds are inside the bridge is an accepted trust
-dependency. Destination account recovery must remain independent of Puddle. The
-optional `@cloakedxyz/puddle/relay` adapter validates reported chains, tokens, recipient,
-sender and minimum output, and fixes the requested refund/recovery owner. It ignores provider-returned transaction
-calldata. It does not independently prove the source address or recorded recovery
-ownership, or provide an exit if Relay's authorization system disappears.
+Relay API requests use an operator's server-side API key. Never include that key
+in a browser bundle or recovery file. See the [API reference](api.md).
 
-Read-only Relay quotes on 4 November 2026 used the planned ZeroDev Kernel address:
+## Recovery boundary
 
-| Base WETH input | Minimum Arbitrum WETH output | Passes 2% shortfall policy |
-| --------------- | ---------------------------- | -------------------------- |
-| 0.0001          | 0.000085030143263058         | No                         |
-| 0.001           | 0.000980438467161227         | Yes                        |
-| 0.01            | 0.009934594345763058         | Yes                        |
+Funds held inside Relay depend on Relay's refund and withdrawal authorization.
+The quote checker does not independently derive the source deposit address or
+prove its recorded recovery owner. Once funds arrive at a Puddle receiving account,
+its owner can recover unshielded funds through the [normal recovery path](recovery.md).
 
-These are expiring samples, not funding instructions or future price guarantees.
-They establish neither funded delivery nor recorded recovery ownership. Earlier
-quotes used the removed custom contracts and are not compatibility evidence.
-No production bridge origins are configured. Relay documents that a configured
-`recoveryAddress` becomes the protocol depositor; verify that field on the actual
-funded request before calling source recovery proven.
-
-Before enabling one route, test funded destination delivery, source refunds and
-recovery, quote expiry, shortfalls, unsupported wallets and destination shielding
-failure. Keep the bridge funding record and destination recovery file separately.
-RAILGUN wallet discovery and screening are additional checks after delivery.
-
-References assessed on 4 November 2026:
-[Relay deposit addresses](https://docs.relay.link/features/deposit-addresses),
-[API keys](https://docs.relay.link/references/api/api-keys),
-[recovery](https://docs.relay.link/references/protocol/guides/withdrawals),
-[depository](https://docs.relay.link/references/protocol/components/depository),
-[Across persistent deposit addresses](https://docs.across.to/introduction/persistent-deposit-addresses).
+For Relay's own behavior, see its [deposit-address documentation](https://docs.relay.link/features/deposit-addresses)
+and [withdrawal documentation](https://docs.relay.link/references/protocol/guides/withdrawals).

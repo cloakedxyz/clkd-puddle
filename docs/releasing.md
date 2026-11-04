@@ -1,7 +1,7 @@
 # Release checklist
 
-An open-source review candidate does not approve public funds. Current evidence and
-remaining security gates are in [RELEASE.md](../RELEASE.md).
+Use this checklist for SDK packages and website releases. Current deployments,
+verification results and review status are recorded in [RELEASE.md](../RELEASE.md).
 
 1. Review the exact source, dependencies and licenses. Run from a clean checkout:
 
@@ -55,11 +55,10 @@ locally after building the SDK. This read-only preflight writes public configura
 runtime templates and source hashes, with no recipient or recovery profile. Review it
 against the independently compiled SDK, then build the host checkout with
 `PUDDLE_SITE_RELEASE=NEW_RELEASE_JSON npm run build:site`. Changed source or deployed
-code fails the build. The explicitly scoped manual website preview uses the reviewed
-`deployments/arbitrum.json` bundle and a 0.0001 WETH per-address UI limit. Its notice
-requires arranging with the operator before funding. This does not satisfy the
-general-availability gates above. The default build remains landing-only unless
-an explicit configuration or release path is selected.
+code fails the build. Vercel uses `deployments/arbitrum.json` for the manual receiving
+flow, with a 0.0001 WETH per-address UI limit. The operator coordinates funding and
+completes the deposit. The default build contains the landing page and docs; select
+a configuration or release path to include the receiving interface.
 
 The optional live planner reads public chain state and executes only on an isolated
 local fork. It never reads keys or sends public transactions:

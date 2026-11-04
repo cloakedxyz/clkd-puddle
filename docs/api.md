@@ -1,8 +1,8 @@
 # SDK API reference
 
-Candidate `@cloakedxyz/puddle@0.1.0-rc.1`. JavaScript modules, ethers v6, browser and Node 24.12+.
-The candidate is unpublished and unaudited. This page describes SDK functions;
-it does not promise a public hosted REST service.
+`@cloakedxyz/puddle@0.1.0-rc.1` provides JavaScript modules for ethers v6, browsers
+and Node 24.12+. Install the repository-built package using [SDK setup](index.md#use-the-sdk).
+This reference covers the SDK’s functions and types.
 
 ## Prepare a receive
 
@@ -135,7 +135,7 @@ public recipient data only. Fresh preparation must not reuse note randomness.
 | `RecoveryFile`      | Versioned JSON form with decimal-string numbers, `depositAddress`, route pins, salt and fixed configuration; no keys or arbitrary calls.                                                                                                                  |
 | `RailgunRecipient`  | `masterPublicKey: bigint`, `viewingPublicKey: Uint8Array`, optional `chainId: bigint` restriction.                                                                                                                                                        |
 
-The generated TypeScript declarations in the packed candidate are authoritative.
+The package’s TypeScript declarations define the complete public types.
 Version 1 recovery files without `assetImplementation` remain accepted for owner
 recovery. Depositing a proxy token requires its current, reviewed implementation pin.
 Addresses are EVM hex strings except the public RAILGUN input. Do not guess token
@@ -153,7 +153,22 @@ minimumMatchingAssetOutput(amount, gasFee); // bigint policy floor
 
 `RelayFundingRequest` specifies origin/destination chain IDs and tokens, destination
 account, recovery owner, bigint input amount/minimum output and slippage basis points.
-Only matching-asset ERC-20 funding is wired into the app. The request fixes refund
+
+```ts
+type RelayFundingRequest = {
+  originChainId: number;
+  originToken: string;
+  destinationChainId: number;
+  destinationToken: string;
+  destinationAddress: string;
+  recoveryOwner: string;
+  amount: bigint;
+  minimumOutput: bigint;
+  slippageBps: number;
+};
+```
+
+The request uses ERC-20 token addresses and fixes refund
 and recovery addresses; the checker validates reported routing, sender and output,
 and ignores provider transaction calldata.
 
@@ -161,4 +176,5 @@ and ignores provider transaction calldata.
 owner, input amount, expected output and minimum output as decimal strings.
 The adapter does not prove recorded source recovery ownership or bridge delivery.
 The app's floor allows at most 2% bridge shortfall and enough output for relay fees.
-No production bridge route is enabled. See [bridge scope](bridges.md).
+Use that floor only for the same asset with equal decimals on both chains.
+No production bridge route is enabled. See [Relay quotes](bridges.md).

@@ -13,12 +13,13 @@ import { createEnvironment, createRecipient, decryptDeposit, fund } from './help
 import { parseRecoveryFile } from '../sdk/index.ts';
 import type { RailgunSiteConfiguration } from '../app/configuration.ts';
 
-test('closed landing page uses product copy and contains no deposit tooling or private data', async () => {
+test('standalone landing page uses product copy and contains no deposit tooling or private data', async () => {
   const output = new URL('../dist/', import.meta.url);
   const html = await readFile(new URL('index.html', output), 'utf8');
   assert.match(html, /Receive privately\./);
   assert.doesNotMatch(html, /ZeroDev|Kernel|ERC-7579/);
-  assert.match(html, /Public deposits aren’t open yet/);
+  assert.match(html, /Get started/);
+  assert.doesNotMatch(html, /Coming soon|Developer preview/);
   assert.doesNotMatch(html, /\{\{|localhost|127\.0\.0\.1|<form|\/api\/|0zk1|RAILGUN on Ethereum/);
   const files = await readdir(output, { recursive: true });
   assert.deepEqual(files.sort(), ['assets', 'assets/metamask.svg', 'assets/rabby.svg', 'assets/railgun.svg',
@@ -41,7 +42,7 @@ test('hosted API reference documents every public SDK export and links to the se
   assert.doesNotMatch(html, /\{\{|<script(?! src=)|PrivacyPoolsDeposit|DepositBase|Coming soon: RAILGUN on Ethereum/);
   for (const page of documentation) {
     const content = await readFile(new URL('../dist' + page.path + 'index.html', import.meta.url), 'utf8');
-    assert.match(content, /ZeroDev|Kernel/);
+    if (page.source === 'docs/architecture.md') assert.match(content, /unmodified Kernel v3.3/);
     assert.doesNotMatch(content, /0zk1|privateKey\s*[:=]|https?:\/\/(?:localhost|127\.0\.0\.1)/);
   }
 });
