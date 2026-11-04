@@ -145,8 +145,16 @@ a.build-version:hover { color: var(--text); }
 .receive-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .receive-heading .preview-label { margin: 0; font-size: 11px; }
 .network-picker { position: relative; flex-shrink: 0; }
-.network-picker select { appearance: none; border: 1px solid var(--line); border-radius: 20px; background: var(--field); padding: 8px 30px 8px 12px; color: var(--text); font-size: 11px; cursor: pointer; max-width: 190px; }
-.network-picker > svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--secondary); }
+.chain-menu-toggle { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 24px; background: var(--field); padding: 7px 11px; color: var(--text); font-size: 11px; }
+.chain-menu-toggle > svg { flex-shrink: 0; color: var(--secondary); }
+#selected-chain-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain-logo { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; border-radius: 50%; }
+.chain-logo[data-chain-id="1"] { background: #627eea; }
+.chain-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: 250px; max-width: calc(100vw - 50px); max-height: min(360px, 60vh); overflow-y: auto; padding: 5px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 10px 32px #0002; }
+.chain-choice { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 9px; background: transparent; color: var(--text); font-size: 12px; text-align: left; }
+.chain-choice:hover:not(:disabled), .chain-choice[aria-pressed="true"] { background: var(--field); }
+.chain-choice:disabled { opacity: .65; }
+.chain-choice-state { margin-left: auto; font-size: 10px; color: var(--secondary); }
 .railgun-card > .description { margin-bottom: 16px; }
 .process-note { margin: 0 0 24px; color: var(--secondary); font-size: 11px; line-height: 1.6; }
 .deposit-review { display: grid; gap: 8px; margin: 20px 0; padding: 18px 20px; border-radius: 18px; background: var(--field); }
@@ -175,4 +183,4 @@ a.build-version:hover { color: var(--text); }
 .railgun-address { display: block; overflow-wrap: anywhere; padding: 12px 0; }
 .railgun-card .button-note { overflow-wrap: anywhere; }
 .railgun-card #wallet-tools { margin-top: 16px; }
-@media (max-width: 540px) { .railgun-card { padding: 22px; } .receive-heading { gap: 10px; } .network-picker select { max-width: 160px; } }
+@media (max-width: 540px) { .railgun-card { padding: 22px; } .receive-heading { gap: 10px; } #selected-chain-name { max-width: 110px; } }

@@ -1,10 +1,15 @@
 <div class="demo-card railgun-card">
   <div class="receive-heading">
     <p class="preview-label" id="railgun-mode">Private transfers</p>
-    <div class="network-picker">
+    <div class="network-picker" id="network-picker">
+      <button type="button" class="chain-menu-toggle" id="chain-menu-toggle" aria-expanded="false" aria-controls="chain-menu" aria-label="Choose funding network" disabled>
+        <img class="chain-logo" id="selected-chain-logo" width="20" height="20" alt="" hidden>
+        <span id="selected-chain-name">Select network</span>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </button>
+      <div class="chain-menu" id="chain-menu" role="group" aria-label="Funding networks" hidden></div>
       <label class="visually-hidden" for="source-chain">Fund from</label>
-      <select id="source-chain" aria-label="Fund from"><option value="">Same chain</option></select>
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      <select id="source-chain" aria-label="Fund from" aria-hidden="true" tabindex="-1" hidden><option value="">Same chain</option></select>
     </div>
   </div>
   <h2>Fund your private wallet.</h2>
