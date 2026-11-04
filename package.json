@@ -37,7 +37,7 @@
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@railgun-community/engine": "9.8.0",
-    "@scure/base": "1.2.6",
+    "@scure/base": "2.4.0",
     "@types/node": "24.19.0",
     "circomlibjs": "0.1.7",
     "esbuild": "0.25.12",
