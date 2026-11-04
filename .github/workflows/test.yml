@@ -5,14 +5,13 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-    inputs:
-      fork:
-        description: Also test against an Arbitrum fork
-        type: boolean
-        default: false
 
 permissions:
   contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -24,25 +23,21 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '24'
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            docs/package-lock.json
-            test/privacy-pools-v1/package-lock.json
+            sdk/package-lock.json
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
         with:
           version: v1.7.1
           cache: false
       - run: npm ci --ignore-scripts
-      - run: npm ci --prefix docs --ignore-scripts
-      - run: npm run setup:contracts
-      - run: npm run privacy-pools-v1:setup
+      - run: npm run setup
       - run: npx playwright install --with-deps chromium
-      - name: TypeScript, Solidity, integration tests and site builds
+      - name: Kernel, SDK, browser and site checks
         run: npm run check
         env:
           FOUNDRY_PROFILE: ci
-      - name: Arbitrum fork test
-        if: github.event_name == 'workflow_dispatch' && inputs.fork
-        run: npm run test:fork
+      - name: Install and type-check the packed SDK outside the checkout
+        run: npm run test:sdk-package

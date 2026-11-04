@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "..",
+    "outDir": "dist",
+    "lib": ["ES2024", "DOM"],
+    "types": []
+  },
+  "include": ["index.ts", "relay.ts"],
+  "exclude": ["dist"]
+}

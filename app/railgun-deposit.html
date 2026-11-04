@@ -1,0 +1,62 @@
+<div class="demo-card railgun-card">
+  <p class="preview-label" id="railgun-mode">RAILGUN pilot</p>
+  <h2>Fund your private wallet.</h2>
+  <p class="description" id="route-description">Checking the deposit route…</p>
+  <div class="notice" id="error" role="alert" hidden></div>
+  <form id="receive-form">
+    <label class="field-label" for="source-chain">Fund from</label><select id="source-chain"><option value="">Same chain</option></select>
+    <label class="field-label" for="private-recipient">Your RAILGUN address</label>
+    <textarea id="private-recipient" rows="3" spellcheck="false" autocomplete="off" placeholder="0zk…" required></textarea>
+    <label class="field-label" for="recovery-owner">Recovery wallet</label>
+    <input id="recovery-owner" spellcheck="false" autocomplete="off" placeholder="Your 0x address" required>
+    <p class="button-note">A wallet you control. It can recover funds still at your Puddle address.</p>
+    <div class="amount-box"><label class="field-label" for="send-amount">Amount to send</label>
+      <div class="amount-field"><input id="send-amount" inputmode="decimal" autocomplete="off" placeholder="0.0" required><span id="asset-symbol"></span></div></div>
+    <button class="primary" type="submit" id="prepare">Create receiving address</button>
+  </form>
+  <section id="receive-details" hidden aria-label="Receiving address">
+    <p id="recipient-summary" class="button-note"></p>
+    <p id="recovery-summary" class="button-note"></p>
+    <details class="fees" open><summary>Fees</summary>
+      <div id="bridge-fee-row" hidden><span>Bridge estimate</span><span id="bridge-fee"></span></div>
+      <div><span>Puddle · 0.1%</span><span id="puddle-fee"></span></div>
+      <div><span>Relay gas reimbursement</span><span id="relay-fee"></span></div>
+      <div><span>Maximum relay gas charge</span><span id="relay-cap"></span></div>
+      <div><span>RAILGUN</span><span id="pool-fee"></span></div>
+    </details>
+    <p class="button-note">The operator can change the gas charge up to the displayed limit.</p>
+    <div class="total"><span id="net-label">Expected private balance</span><strong id="net-amount"></strong></div>
+    <button class="secondary" type="button" id="save-backup">Save recovery file</button>
+    <button class="secondary" type="button" id="save-bridge" hidden>Save bridge details</button>
+    <p class="button-note" id="bridge-note" hidden></p>
+    <p id="backup-status" class="button-note">Save your recovery file to reveal the funding address.</p>
+    <div id="funding-instructions" hidden>
+      <span class="field-label">Send to this address</span><code id="receiving-address" class="railgun-address"></code>
+      <button class="secondary" type="button" id="copy-address">Copy address</button>
+      <p id="send-instructions" class="button-note"></p>
+    </div>
+    <p id="balance-status" role="status" aria-live="polite"></p>
+    <p id="automatic-status" role="status" class="button-note" hidden></p>
+    <div id="demo-actions" hidden>
+      <button class="primary" type="button" id="demo-fund">Send test tokens</button>
+      <button class="primary" type="button" id="demo-relay">Relay test deposit</button>
+    </div>
+    <button class="secondary" type="button" id="refresh-deposit">Check deposit</button>
+    <details id="wallet-tools"><summary>Wallet actions</summary>
+      <p class="button-note">Send with your wallet, relay with the configured operator wallet, or recover with the recovery wallet. Your keys stay in your wallet.</p>
+      <label for="wallet-choice" class="field-label">Wallet</label><select id="wallet-choice"><option value="">Browser wallet</option></select>
+      <button class="secondary" type="button" id="connect-wallet">Connect wallet</button>
+      <p id="connected-wallet" class="button-note"></p>
+      <button class="primary" type="button" id="send-from-wallet" disabled>Send tokens</button>
+      <button class="secondary" type="button" id="prepare-manual-relay" hidden>Prepare manual deposit</button>
+      <button class="primary" type="button" id="relay-from-wallet" disabled>Relay deposit</button>
+      <button class="secondary" type="button" id="recover-from-wallet" disabled>Recover remaining tokens</button>
+    </details>
+    <p id="transaction-status" role="status" class="button-note"></p>
+    <p class="button-note">Check your RAILGUN wallet for receipt and screening status. Initial transfers are public. After shielding, your RAILGUN wallet controls the private balance.</p>
+    <button class="secondary" type="button" id="new-receive">Create another address</button>
+  </section>
+  <label class="field-label" for="restore-backup">Restore a recovery file</label>
+  <input id="restore-backup" type="file" accept="application/json,.json">
+  <p class="button-note">Unaudited pilot. Use test funds only. Bridging is enabled only for separately verified routes.</p>
+</div>

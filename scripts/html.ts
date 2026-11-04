@@ -11,14 +11,13 @@ export function renderBrand(template: string) {
     (_, key: 'name' | 'displayName' | 'repository') => escapeHTML(brand[key]));
 }
 
-export async function renderApp(mode: 'local' | 'public') {
-  const local = mode === 'local';
+export async function renderApp(mode: 'public' | 'railgun') {
   const values = {
-    scripts: local ? '<script type="module" src="/main.js"></script>' : '',
-    docs: local ? 'http://127.0.0.1:5174' : '/docs/',
-    recovery: local ? 'http://127.0.0.1:5175' : '/docs/recovery',
-    label: local ? 'Local deposit test' : 'Private deposits',
-    deposit: await readFile(new URL(`app/${local ? 'local' : 'public'}-deposit.html`, root), 'utf8'),
+    scripts: mode === 'railgun' ? '<script type="module" src="/railgun.js"></script>' : '',
+    docs: '/docs/',
+    recovery: '/docs/recovery/',
+    label: 'Private deposits',
+    deposit: await readFile(new URL(`app/${mode === 'railgun' ? 'railgun' : 'public'}-deposit.html`, root), 'utf8'),
   };
   const template = await readFile(new URL('app/index.html', root), 'utf8');
   return renderBrand(template.replace(/\{\{app\.(scripts|docs|recovery|label|deposit)\}\}/g,

@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement or integration.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who needs this, and what are they trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include alternatives and any effects on fees, privacy or recovery.
+    validations:
+      required: true

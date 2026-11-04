@@ -9,3 +9,9 @@ contract DemoToken is ERC20 {
     function decimals() public pure override returns (uint8) { return 6; }
     function mint(address to, uint256 amount) external { _mint(to, amount); }
 }
+
+/// @notice Disposable wrapped native token for local relay-worker tests.
+contract DemoWrappedNative is ERC20 {
+    constructor() ERC20("Demo wrapped native", "WETH") {}
+    function deposit() external payable { _mint(msg.sender, msg.value); }
+}
