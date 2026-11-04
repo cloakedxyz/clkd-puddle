@@ -5,8 +5,8 @@ import { escapeHTML, revisionBadge } from './html.ts';
 
 export const documentation = [
   {source: 'docs/index.md', path: '/docs/', label: 'Start here'},
-  {source: 'docs/api.md', path: '/docs/api/', label: 'SDK API reference'},
   {source: 'docs/recovery.md', path: '/docs/recovery/', label: 'Recovery'},
+  {source: 'docs/api.md', path: '/docs/api/', label: 'SDK API reference'},
   {source: 'docs/architecture.md', path: '/docs/architecture/', label: 'Architecture'},
   {source: 'docs/bridges.md', path: '/docs/bridges/', label: 'Relay quotes'},
   {source: 'SECURITY.md', path: '/docs/security/', label: 'Security'},
@@ -87,5 +87,5 @@ export async function renderDocumentation(page: typeof documentation[number]) {
 <button type="button" data-theme-choice="light" aria-label="Light mode">Light</button><button type="button" data-theme-choice="dark" aria-label="Dark mode">Dark</button></nav></header>
 <div class="docs-layout"><aside class="docs-sidebar"><p>Documentation</p><nav aria-label="Documentation">${links}</nav>
 <p>On this page</p><nav aria-label="On this page">${sections.map(section => `<a href="#${escapeHTML(section.id)}">${escapeHTML(section.title)}</a>`).join('')}</nav></aside>
-<main id="content" class="docs-content">${html}<footer><a href="${escapeHTML(brand.repository)}/blob/main/${page.source}">View source</a> · Unpublished developer preview</footer></main></div></div>${revisionBadge('build-version')}</body></html>`;
+<main id="content" class="docs-content">${html}<footer><a href="${escapeHTML(brand.repository)}/blob/main/${page.source}">View source</a></footer></main></div></div>${revisionBadge('build-version')}</body></html>`;
 }

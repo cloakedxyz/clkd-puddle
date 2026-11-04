@@ -1,6 +1,6 @@
 # Puddle SDK
 
-Receiving, quotes and owner recovery for **ZeroDev Kernel + RAILGUN**.
+Create receiving addresses, estimate fees and recover funds for RAILGUN deposits.
 Version `0.1.0-rc.1` is distributed as a repository build.
 
 Prepare an ordinary ERC-20 receiving account from a public RAILGUN address and

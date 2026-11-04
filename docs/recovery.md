@@ -10,12 +10,11 @@ It cannot withdraw funds that have already been shielded into the private wallet
 2. Connect the wallet whose address is recorded as the recovery owner.
 3. Switch to the chain shown in the file and keep enough native currency for gas.
 4. Select **Recover remaining tokens**.
-5. If the account is undeployed, approve its creation through the standard Kernel factory.
+5. If prompted, approve creation of your receiving account.
 6. Approve the recovery transaction and check your wallet balance.
 
-Both transactions are authorized by the recovery owner. The Puddle relayer does not
-sign or approve recovery. A pool upgrade, expired quote or removed deposit module
-does not prevent this ownership path. If the site is unavailable, use the SDK below.
+Your wallet signs recovery; the operator's approval is not needed.
+If the site is unavailable, use the SDK below.
 
 ## Use the SDK
 
