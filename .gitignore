@@ -2,13 +2,23 @@ node_modules/
 .cache/
 dist/
 .vercel/
-docs/.vocs/
-docs/.waku/
-docs/dist/
-docs/src/pages.gen.ts
 artifacts/
 .env
 .env.*
 !.env.example
 *.log
 .DS_Store
+sdk/dist/
+sdk/LICENSE
+sdk/poseidon-lite-NOTICE
+*.tgz
+
+# Credentials, wallet exports and local tool state.
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+.idea/
+.vscode/
+coverage/

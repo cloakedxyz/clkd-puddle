@@ -1,0 +1,62 @@
+{
+  "name": "@cloakedxyz/puddle",
+  "version": "0.1.0-rc.1",
+  "description": "Receive ordinary token transfers into a RAILGUN private balance.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cloakedxyz/clkd-puddle.git",
+    "directory": "sdk"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "NOTICE",
+    "poseidon-lite-NOTICE",
+    "verify-build.mjs",
+    "examples"
+  ],
+  "scripts": {
+    "prepack": "node verify-build.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    },
+    "./contracts": "./dist/contracts.json",
+    "./relay": {
+      "types": "./dist/sdk/relay.d.ts",
+      "import": "./dist/sdk/relay.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "ethers": "^6.17.0"
+  },
+  "dependencies": {
+    "@noble/curves": "1.4.2",
+    "@scure/base": "1.2.6",
+    "poseidon-lite": "0.3.0"
+  },
+  "homepage": "https://github.com/cloakedxyz/clkd-puddle/tree/main/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/cloakedxyz/clkd-puddle/issues"
+  },
+  "keywords": [
+    "railgun",
+    "privacy",
+    "ethereum",
+    "erc20",
+    "sdk"
+  ]
+}

@@ -1,0 +1,12 @@
+# Generated output and downloaded dependencies.
+.cache/
+node_modules/
+**/node_modules/
+dist/
+artifacts/
+sdk/dist/
+docs/dist/
+docs/.vocs/
+docs/.waku/
+.vercel/
+**/package-lock.json
