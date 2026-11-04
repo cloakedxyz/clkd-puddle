@@ -10,6 +10,7 @@ export interface Deployment {
   executor: string;
   pool: string;
   poolImplementation: {address: string; codeHash: string} | null;
+  assetImplementation?: {address: string; codeHash: string} | null;
   asset: string;
   maxGasFee: bigint;
   codeHashes: Record<'factory' | 'implementation' | 'validator' | 'executor' | 'pool' | 'asset', string>;
@@ -100,12 +101,13 @@ export async function verifyDeployment(provider: Provider, deployment: Deploymen
   requireThat(deployment.maxGasFee >= 0n && deployment.maxGasFee < 1n << 120n, 'Invalid gas policy.');
   // Owner recovery must continue when the pool is paused, upgraded or unavailable.
   if (!recoveryOnly) {
-    const poolImplementation = getAddress(`0x${(await provider.getStorage(deployment.pool, implementationSlot)).slice(-40)}`);
-    if (deployment.poolImplementation) {
-      requireThat(same(poolImplementation, deployment.poolImplementation.address)
-        && keccak256(await provider.getCode(poolImplementation)) === deployment.poolImplementation.codeHash,
-      'RAILGUN pool implementation changed.');
-    } else requireThat(poolImplementation === ZeroAddress, 'A proxy pool requires an implementation pin.');
+    for (const role of ['pool', 'asset'] as const) {
+      const implementation = getAddress(`0x${(await provider.getStorage(deployment[role], implementationSlot)).slice(-40)}`);
+      const pin = role === 'pool' ? deployment.poolImplementation : deployment.assetImplementation;
+      if (pin) requireThat(same(implementation, pin.address)
+        && keccak256(await provider.getCode(implementation)) === pin.codeHash, `${role} implementation changed.`);
+      else requireThat(implementation === ZeroAddress, `A proxy ${role} requires an implementation pin.`);
+    }
   }
   if (artifacts) requireThat(artifacts.format === 'puddle-kernel-artifacts' && artifacts.version === 1, 'Wrong trusted artifacts.');
   const names = recoveryOnly ? ['factory', 'implementation', 'validator', 'executor'] as const
@@ -160,6 +162,10 @@ export async function validateDeposit(adapter: {deployment: Readonly<Deployment>
     && same(record.poolImplementation.address, expected.poolImplementation.address)
     && record.poolImplementation.codeHash === expected.poolImplementation.codeHash : record.poolImplementation === null,
   'Wrong pool implementation pin.');
+  requireThat(expected.assetImplementation ? record.assetImplementation
+    && same(record.assetImplementation.address, expected.assetImplementation.address)
+    && record.assetImplementation.codeHash === expected.assetImplementation.codeHash : !record.assetImplementation,
+  'Wrong asset implementation pin.');
   for (const name of ['factory', 'implementation', 'validator', 'executor', 'pool', 'asset'] as const) {
     requireThat(same(record[name], expected[name]) && record.codeHashes[name] === expected.codeHashes[name], 'Wrong deposit deployment.');
   }

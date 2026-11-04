@@ -8,6 +8,7 @@ export interface RailgunSiteConfiguration {
   factory: string;
   pool: string;
   poolImplementation: Deployment['poolImplementation'];
+  assetImplementation?: Deployment['assetImplementation'];
   implementation: string;
   validator: string;
   executor: string;
@@ -78,6 +79,7 @@ export function validateRailgunSiteConfiguration(value: RailgunSiteConfiguration
 
 export function siteDeployment(value: RailgunSiteConfiguration): Deployment {
   return { chainId: BigInt(value.chainId), factory: value.factory, implementation: value.implementation,
-    validator: value.validator, executor: value.executor, pool: value.pool, poolImplementation: value.poolImplementation, asset: value.token,
+    validator: value.validator, executor: value.executor, pool: value.pool, poolImplementation: value.poolImplementation,
+    assetImplementation: value.assetImplementation ?? null, asset: value.token,
     maxGasFee: BigInt(value.maxGasFee), codeHashes: { ...value.codeHashes } };
 }

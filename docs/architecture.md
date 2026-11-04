@@ -20,7 +20,7 @@ the relayer, fee recipient and encrypted recipient hash. The ordinary Kernel fac
 creates the account at an address independently derived by the SDK.
 
 The trusted deployment fixes the factory, implementation, validator, module, token,
-pool and gas ceiling. Runtime code hashes, built contract artifacts and module getters
+pool and gas ceiling. Pool/token implementation pins, runtime code hashes, built contract artifacts and module getters
 are checked before funding. A configuration returned by an untrusted API cannot
 serve as its own trusted source. Save recovery before showing the account address.
 

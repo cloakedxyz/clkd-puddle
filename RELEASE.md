@@ -86,20 +86,52 @@ The superseded contracts, experiments and deployment manifests have been removed
   consumer installation in [GitHub Actions](https://github.com/cloakedxyz/clkd-puddle/actions/runs/41908723240).
   The source migration merged through [PR #1](https://github.com/cloakedxyz/clkd-puddle/pull/1).
   The updated [website docs](https://puddle.link/docs/) and [API reference](https://puddle.link/docs/api/)
-  are published. Live receiving remains disabled pending the new deployed route.
+  were published with live receiving disabled at that stage.
 
-## Outstanding before public funds
+## Outstanding before general availability
 
-1. Obtain approval for and execute the bounded live ZeroDev + RAILGUN plan using the
-   verified production factory/pool route and the current module build.
-2. Confirm intended-wallet discovery, screening, private spending and owner recovery
-   on that actual live route. Do not substitute the old pilot's receipts.
-3. Validate automatic WETH relaying on the approved live route and review operating
+1. Confirm screening and private spend readiness on the new live route. Discovery
+   and owner recovery are confirmed; private spending has not been tested.
+2. Validate automatic WETH relaying on the approved live route and review operating
    controls, monitoring, pricing buffers and deployment before a public service.
-4. Test a funded bridge route, refunds and failure recovery before enabling it.
-5. Independently review the exact module, browser note encoder, dependencies and
+3. Test a funded bridge route, refunds and failure recovery before enabling it.
+4. Independently review the exact module, browser note encoder, dependencies and
    service; resolve findings and finalize namespace/tag before publication.
 
-The website/docs update is published. No new live ZeroDev transactions or npm
-publication have been performed as part of this migration.
+## Live ZeroDev pilot — 4 November 2026
+
+The explicitly approved ten-transaction Arbitrum plan completed with a native debit
+of **0.000178924348548002 ETH**, below its **0.00031 ETH** cap. Network fees were
+0.000078924348548 ETH. It used the stock Kernel factory and implementation above,
+a new standard validator and the current restricted RAILGUN executor.
+
+- The counterfactual account's owner recovered a small transfer before shielding.
+- The Kernel deposit emitted the exact intended encrypted recipient, token and value.
+  The recipient's RAILGUN wallet independently discovered **0.00007471275 WETH**
+  (displayed as ETH). Screening remains pending in the wallet's standby period.
+- The account ended with zero token balance and zero pool allowance; its deposit
+  action was marked spent. A later transfer was recovered by the same owner.
+- Native and token balances reconciled with the receipts and charged fees. Private
+  approval, recipient, recovery file and transaction journal remain outside Git.
+- Follow-up SDK verification now pins the WETH proxy implementation as well as the
+  pool implementation. Previously saved recovery files remain readable and owner
+  recovery remains available without those deposit checks. No contract changed.
+- Sourcify matched the creation and runtime code for the deployed
+  [standard validator](https://repo.sourcify.dev/42161/0xDb8D974998Ee6918D5CDC9E09eB3BEC31DFB0d95)
+  and [RAILGUN executor](https://repo.sourcify.dev/42161/0x107784Ffa2cAdEE9f5Fa3C9c607C09A842eBE589).
+  Source verification establishes a code match; it is not a security audit.
+- After the token pin and website changes, all 37 local checks passed, including
+  matching the public route bundle to the independently compiled SDK artifacts.
+  A fresh Arbitrum fork at block **521291782** and an installed SDK package
+  consumer also passed. The package runtime audit still reports zero known advisories.
+- The manual static site built against the real deployed route, with matching source
+  and runtime hashes. A separate hosting-checkout test used no compiler cache or
+  prebuilt SDK and completed the manual deposit flow on a disposable local chain.
+
+The website is configured for the explicitly requested manual preview with a
+0.0001 WETH per-address UI limit on Arbitrum One, public route
+pins and runtime templates. It requires arranging with the operator before funding;
+no hosted signer or automatic service is provided. Automatic live
+operation, funded bridging, independent security review and npm publication remain
+outstanding.
 See [release preparation](docs/releasing.md).

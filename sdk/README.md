@@ -37,7 +37,7 @@ const { deposit, recovery } = await prepareRailgunReceive(
 ```
 
 `Deployment` specifies chain ID, stock Kernel factory/implementation/validator,
-Puddle executor, pool (including its proxy implementation pin), asset, immutable gas ceiling and code hashes. It is a trusted
+Puddle executor, pool and asset (including their proxy implementation pins), immutable gas ceiling and code hashes. It is a trusted
 application input, not data to accept from an untrusted API. `amount` and `gasFee`
 are token base units; `deadline` is a Unix timestamp. Use bigint values.
 

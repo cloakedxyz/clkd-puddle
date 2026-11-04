@@ -1,20 +1,23 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, lstat, rm } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, readdir, lstat, rm, symlink, writeFile } from 'node:fs/promises';
+import { execFile, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { promisify } from 'node:util';
 import { chromium } from 'playwright';
 import test from 'node:test';
 import { documentation, renderMarkdown } from '../scripts/docs.ts';
-import { buildSite } from '../scripts/build-site.ts';
+import { createSiteRelease, readSiteRelease, validateSiteRelease } from '../scripts/site-release.ts';
 import { createEnvironment, createRecipient, decryptDeposit, fund } from './helpers.ts';
 import { parseRecoveryFile } from '../sdk/index.ts';
 import type { RailgunSiteConfiguration } from '../app/configuration.ts';
 
-test('public build describes ZeroDev + RAILGUN and contains no deposit tooling or private data', async () => {
+test('closed landing page uses product copy and contains no deposit tooling or private data', async () => {
   const output = new URL('../dist/', import.meta.url);
   const html = await readFile(new URL('index.html', output), 'utf8');
-  assert.match(html, /ZeroDev \+ RAILGUN/);
+  assert.match(html, /Receive privately\./);
+  assert.doesNotMatch(html, /ZeroDev|Kernel|ERC-7579/);
   assert.match(html, /Public deposits aren’t open yet/);
   assert.doesNotMatch(html, /\{\{|localhost|127\.0\.0\.1|<form|\/api\/|0zk1|RAILGUN on Ethereum/);
   const files = await readdir(output, { recursive: true });
@@ -68,11 +71,47 @@ test('static receiving build supports manual relay and clean API docs without a 
       chainId: '31337', chainName: 'Local test chain', rpcUrl: env.provider._getConnection().url,
       factory: env.deployment.factory, implementation: env.deployment.implementation, validator: env.deployment.validator,
       executor: env.deployment.executor, maxGasFee: String(env.deployment.maxGasFee), codeHashes: env.deployment.codeHashes,
-      pool: env.deployment.pool, poolImplementation: env.deployment.poolImplementation, relayer: await env.relayer.getAddress(),
+      pool: env.deployment.pool, poolImplementation: env.deployment.poolImplementation,
+      assetImplementation: env.deployment.assetImplementation, relayer: await env.relayer.getAddress(),
       feeRecipient: await env.feeCollector.getAddress(), token: env.deployment.asset, symbol: 'test USDC', decimals: 6,
       gasFee: '200000', maxAmount: '1000000000000', mode: 'pilot',
     };
-    await buildSite(output, Object.assign(configuration, {privateRecipient: recipient.address, privateMarker: 'not-public'}));
+    const release = await createSiteRelease(Object.assign(configuration, {privateRecipient: recipient.address, privateMarker: 'not-public'}));
+    await validateSiteRelease(release, true);
+    assert(!JSON.stringify(release).includes(recipient.address));
+    const badSource = structuredClone(release); badSource.sourceHashes['sdk/kernel.ts'] = '0'.repeat(64);
+    await assert.rejects(validateSiteRelease(badSource), /source changed/);
+    const unsafe = structuredClone(release); unsafe.sourceHashes['../outside'] = '0'.repeat(64);
+    await assert.rejects(validateSiteRelease(unsafe), /Unsafe/);
+    const privateData = structuredClone(release);
+    Object.assign(privateData.configuration, {privateRecipient: recipient.address});
+    await assert.rejects(validateSiteRelease(privateData), /nonpublic/);
+    const wrongArtifact = structuredClone(release); wrongArtifact.artifacts.contracts.executor.code = '0x00';
+    await assert.rejects(validateSiteRelease(wrongArtifact, true), /runtime|reference|compiled/);
+    // Reproduce a hosting checkout with npm dependencies but no Foundry cache or sdk/dist.
+    // The same static build must work from the reviewed release, then pass the browser flow.
+    const checkout = join(output, 'source-checkout'); await mkdir(checkout);
+    const paths = execFileSync('git', ['ls-files', '-z'], {encoding: 'utf8'}).split('\0').filter(Boolean);
+    paths.push('scripts/site-release.ts');
+    for (const path of new Set(paths)) {
+      if (!(await lstat(path).catch(() => null))?.isFile()) continue;
+      await mkdir(dirname(join(checkout, path)), {recursive: true}); await copyFile(path, join(checkout, path));
+    }
+    await symlink(resolve('node_modules'), join(checkout, 'node_modules'), 'dir');
+    const releasePath = join(checkout, 'reviewed-release.json');
+    await writeFile(releasePath, JSON.stringify(release));
+    await readSiteRelease(releasePath);
+    const built = join(checkout, 'dist');
+    await promisify(execFile)(process.execPath, ['--input-type=module', '-e',
+      'import {readSiteRelease} from "./scripts/site-release.ts"; import {buildSite} from "./scripts/build-site.ts"; const r=await readSiteRelease("reviewed-release.json"); await buildSite("dist",r.configuration,r);'],
+    {cwd: checkout, timeout: 45_000, maxBuffer: 1_000_000});
+    assert.equal(await lstat(join(checkout, '.cache')).catch(() => null), null);
+    assert.equal(await lstat(join(checkout, 'sdk/dist')).catch(() => null), null);
+    for (const path of await readdir(built, {recursive: true})) {
+      if (!(await lstat(join(built, path))).isFile()) continue;
+      await mkdir(dirname(join(output, path)), {recursive: true}); await copyFile(join(built, path), join(output, path));
+    }
+    await rm(checkout, {recursive: true});
     for (const path of await readdir(output, {recursive: true})) {
       if (!(await lstat(join(output, path))).isFile()) continue;
       const bytes = await readFile(join(output, path));
@@ -108,6 +147,8 @@ test('static receiving build supports manual relay and clean API docs without a 
     await page.addInitScript(() => { (window as unknown as {ethereum: unknown}).ethereum = {request: (request: unknown) =>
       (window as unknown as {staticWalletRequest: (input: unknown) => Promise<unknown>}).staticWalletRequest(request)}; });
     await page.goto(url);
+    assert.doesNotMatch(await page.locator('.railgun-card').innerText(), /ZeroDev|Kernel|ERC-7579/);
+    await page.locator('#manual-deposit-note').waitFor({state: 'visible'});
     await page.locator('#private-recipient').fill(recipient.address);
     await page.locator('#recovery-owner').fill(await env.recovery.getAddress());
     await page.locator('#send-amount').fill('100'); await page.locator('#prepare').click();

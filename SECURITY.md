@@ -1,6 +1,8 @@
 # Security
 
-This ZeroDev + RAILGUN implementation is **unaudited**. Use local test funds.
+This ZeroDev + RAILGUN implementation is **unaudited**. Prefer local test funds.
+The website's small manual pilot requires arranging with the operator before funding;
+it is not a generally available deposit service.
 Reusing Kernel does not extend its audit coverage to Puddle's module, SDK or service.
 The old custom-contract pilot is not evidence for this implementation.
 
@@ -18,6 +20,9 @@ The old custom-contract pilot is not evidence for this implementation.
   owner changes/upgrades invalidate the SDK's original assumptions and are rejected.
 - RAILGUN's pool, governance and screening remain external dependencies. A transaction
   receipt does not establish wallet discovery, screening or spendability.
+- Token issuer/governance control is also external. Pool and token proxy implementations
+  are pinned before new deposits; that detects changes but cannot freeze an issuer's
+  token logic. Owner recovery skips those deposit pins and still depends on a functioning token.
 - The optional Relay adapter checks reported terms; it does not prove source recovery
   ownership or an exit without Relay's authorization. No funded bridge route is enabled.
 

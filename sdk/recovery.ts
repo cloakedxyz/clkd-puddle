@@ -20,6 +20,7 @@ export function createRecoveryFile(record: DepositRecord): RecoveryFile {
     factory: record.factory, implementation: record.implementation, validator: record.validator,
     executor: record.executor, pool: record.pool, asset: record.asset, codeHashes: record.codeHashes,
     poolImplementation: record.poolImplementation,
+    assetImplementation: record.assetImplementation ?? null,
     depositAddress: record.address, salt: record.salt, config: record.config,
   }));
 }
@@ -36,11 +37,19 @@ function uint(value: unknown, bits: number) {
   requireThat(typeof value === 'string' && /^(0|[1-9][0-9]{0,77})$/.test(value) && BigInt(value) < 1n << BigInt(bits), 'Invalid recovery number.');
   return value;
 }
+function implementationPin(value: unknown): Deployment['poolImplementation'] {
+  if (value === null || value === undefined) return null;
+  const pin = object(value, ['address', 'codeHash']);
+  requireThat(typeof pin.codeHash === 'string' && /^0x[\da-f]{64}$/.test(pin.codeHash), 'Invalid implementation hash.');
+  return {address: address(pin.address), codeHash: pin.codeHash};
+}
 export function parseRecoveryFile(text: string): RecoveryFile {
   requireThat(new TextEncoder().encode(text).length <= 16384, 'Recovery file is too large.');
   const input: unknown = JSON.parse(text);
+  const hasAssetPin = input && typeof input === 'object' && Object.hasOwn(input, 'assetImplementation');
   const file = object(input, ['format', 'version', 'protocol', 'chainId', 'factory', 'implementation', 'validator',
-    'executor', 'pool', 'poolImplementation', 'asset', 'maxGasFee', 'codeHashes', 'depositAddress', 'salt', 'config']);
+    'executor', 'pool', 'poolImplementation', 'asset', 'maxGasFee', 'codeHashes', 'depositAddress', 'salt', 'config',
+    ...(hasAssetPin ? ['assetImplementation'] : [])]);
   requireThat(file.format === 'puddle-kernel-railgun-recovery' && file.version === 1 && file.protocol === 'railgun', 'Unsupported recovery format.');
   const config = object(file.config, ['recipient', 'recovery', 'relayer', 'feeRecipient']);
   requireThat(typeof config.recipient === 'string' && /^0x[\da-fA-F]{320}$/.test(config.recipient), 'Invalid recipient instructions.');
@@ -48,17 +57,12 @@ export function parseRecoveryFile(text: string): RecoveryFile {
   const names = ['factory', 'implementation', 'validator', 'executor', 'pool', 'asset'] as const;
   const hashes = object(file.codeHashes, [...names]);
   for (const value of Object.values(hashes)) requireThat(typeof value === 'string' && /^0x[\da-f]{64}$/.test(value), 'Invalid code hash.');
-  let poolImplementation: Deployment['poolImplementation'] = null;
-  if (file.poolImplementation !== null) {
-    const pin = object(file.poolImplementation, ['address', 'codeHash']);
-    requireThat(typeof pin.codeHash === 'string' && /^0x[\da-f]{64}$/.test(pin.codeHash), 'Invalid pool implementation hash.');
-    poolImplementation = {address: address(pin.address), codeHash: pin.codeHash};
-  }
   const result: RecoveryFile = {
     format: 'puddle-kernel-railgun-recovery', version: 1, protocol: 'railgun',
     chainId: uint(file.chainId, 64), maxGasFee: uint(file.maxGasFee, 120),
     ...Object.fromEntries(names.map(name => [name, address(file[name])])) as Pick<RecoveryFile, typeof names[number]>,
-    poolImplementation, codeHashes: hashes as Deployment['codeHashes'], depositAddress: address(file.depositAddress), salt: file.salt,
+    poolImplementation: implementationPin(file.poolImplementation), assetImplementation: implementationPin(file.assetImplementation),
+    codeHashes: hashes as Deployment['codeHashes'], depositAddress: address(file.depositAddress), salt: file.salt,
     config: { recipient: config.recipient, recovery: address(config.recovery), relayer: address(config.relayer), feeRecipient: address(config.feeRecipient) },
   };
   requireThat(BigInt(result.chainId) > 0n, 'Invalid recovery chain.');
