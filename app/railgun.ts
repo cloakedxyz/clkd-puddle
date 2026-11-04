@@ -349,7 +349,7 @@ el('new-receive').addEventListener('click', () => void act(async () => {
   el('transaction-status').textContent = ''; render();
 }));
 el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo' : 'Private transfers';
-el('route-description').textContent = `Receive ${configuration.symbol} on ${configuration.chainName}. No wallet connection needed.`;
+el('route-description').textContent = `${configuration.symbol} on ${configuration.chainName}.`;
 el('asset-symbol').textContent = configuration.symbol;
 if (fixedAmount) {
   field('send-amount').value = formatUnits(fixedAmount, configuration.decimals);
