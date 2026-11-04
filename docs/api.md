@@ -56,7 +56,7 @@ await inspectDeposit(adapter, deposit, provider);
 
 await validateDeposit(adapter, record, provider); // void
 await verifyDeployment(provider, deployment, artifacts); // void
-await verifyAccount(provider, record, (checkExecutor = true)); // boolean
+await verifyAccount(provider, record); // boolean; checkExecutor defaults to true
 ```
 
 `ready` means unused and sufficiently funded for that quote; it does not establish
@@ -91,17 +91,15 @@ screening and private spend readiness separately.
 createRecoveryFile(record); // RecoveryFile
 parseRecoveryFile(jsonText); // RecoveryFile
 recoveryRecord(file); // DepositRecord
-await inspectRecovery(provider, file, artifacts, (asset = file.asset));
+await inspectRecovery(provider, file, artifacts); // asset defaults to file.asset
 // { deployed: boolean; balance: bigint; address: string; recovery: string }
 
-await recoveryTransaction(
-  provider,
-  file,
-  artifacts,
-  owner,
-  (asset = file.asset),
-  (action = "recover"),
-); // ethers TransactionRequest; signs and sends nothing
+await recoveryTransaction(provider, file, artifacts, owner);
+// ethers TransactionRequest; defaults to file.asset and action "recover"
+// Signs and sends nothing.
+
+await recoveryTransaction(provider, file, artifacts, owner, file.asset, "deploy");
+// Explicit asset and action for an undeployed account.
 ```
 
 `parseRecoveryFile` strictly validates fields, rejects extra fields and files over
