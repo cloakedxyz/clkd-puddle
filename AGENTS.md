@@ -11,6 +11,7 @@ Read `README.md`, `docs/architecture.md`, then `SECURITY.md`.
 - `contracts/KernelImports.sol`: imports unmodified upstream Kernel, factory and validator.
 - `sdk/`: browser/Node preparation, account checks, quotes and owner recovery.
 - `app/`: the single receiving/recovery interface.
+- `deployments/arbitrum.json`: reviewed public route pins and runtime templates for the manual website preview; no personal accounts or recipient data.
 - `scripts/railgun-app.ts`: localhost demo/pilot server; no production keys.
 - `scripts/plan-live.ts`: read-only public preflight and isolated-fork pilot planning; never sends live transactions.
 - `scripts/relay-worker.ts`: private, bounded operator queue; signed transactions reach disk before broadcast.
@@ -38,6 +39,7 @@ All default checks are local and send no live transactions.
 - Treat execution, recipient discovery, screening and private spending as separate evidence.
 - Test changes to contract behavior against the actual Kernel and RAILGUN contracts.
 - Keep generated output, secrets and pilot records under ignored `.cache/`.
+  The reviewed public website deployment bundle is the sole generated-file exception.
 
 Use plain English. Keep changes focused and avoid extra abstractions or duplicate guides.
 Record current evidence in `RELEASE.md`. Live spending and publication need their own explicit scope.

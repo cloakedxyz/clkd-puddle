@@ -34,7 +34,7 @@ remaining security gates are in [RELEASE.md](../RELEASE.md).
    No automatic publishing workflow is configured.
 5. Verify a fresh registry install after publication and record its digest/tag.
 
-Before public deposits: resolve independent review findings, complete the exact live
+Before general availability: resolve independent review findings, complete the exact live
 Kernel/RAILGUN wallet and recovery checks, verify deployed source, distribute matching
 recovery artifacts, and operate reliable automatic relaying with realistic gas quotes.
 Bridge routes additionally need funded success/refund/failure validation.
@@ -55,8 +55,11 @@ locally after building the SDK. This read-only preflight writes public configura
 runtime templates and source hashes, with no recipient or recovery profile. Review it
 against the independently compiled SDK, then build the host checkout with
 `PUDDLE_SITE_RELEASE=NEW_RELEASE_JSON npm run build:site`. Changed source or deployed
-code fails the build. This handoff does not approve opening public deposits; keep
-the default landing-only build until the security gates above are satisfied.
+code fails the build. The explicitly scoped manual website preview uses the reviewed
+`deployments/arbitrum.json` bundle and a 0.0001 WETH per-address UI limit. Its notice
+requires arranging with the operator before funding. This does not satisfy the
+general-availability gates above. The default build remains landing-only unless
+an explicit configuration or release path is selected.
 
 The optional live planner reads public chain state and executes only on an isolated
 local fork. It never reads keys or sends public transactions:

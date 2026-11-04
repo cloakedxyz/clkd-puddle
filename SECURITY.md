@@ -1,6 +1,8 @@
 # Security
 
-This ZeroDev + RAILGUN implementation is **unaudited**. Use local test funds.
+This ZeroDev + RAILGUN implementation is **unaudited**. Prefer local test funds.
+The website's small manual pilot requires arranging with the operator before funding;
+it is not a generally available deposit service.
 Reusing Kernel does not extend its audit coverage to Puddle's module, SDK or service.
 The old custom-contract pilot is not evidence for this implementation.
 

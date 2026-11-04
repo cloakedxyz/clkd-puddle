@@ -6,7 +6,8 @@ shielded through your recovery wallet.
 
 **Unaudited preview. A bounded live ZeroDev pilot passed deposit and recovery checks;
 the recipient wallet discovered the deposit and screening is still pending.
-The SDK candidate is not published on npm. Public deposits remain closed.**
+The SDK candidate is not published on npm. The website offers a small manual pilot;
+arrange with the operator before funding.**
 
 ## Receive
 
@@ -21,6 +22,8 @@ The SDK candidate is not published on npm. Public deposits remain closed.**
 A sender needs only an ordinary token transfer. Preparing a receiving address does
 not require a recipient signature, spending key or private viewing key. The manual
 relay step is an operator action, not a requirement to connect your RAILGUN wallet.
+The website currently accepts 0.0001 WETH per receiving address on Arbitrum One.
+Only the configured operator can complete shielding; arrange this before sending.
 
 Each receiving account shields once. Excess or later transfers remain recoverable.
 Initial transfers and reused recovery addresses are publicly linkable.

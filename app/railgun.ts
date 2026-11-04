@@ -349,6 +349,7 @@ el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo ·
 el('route-description').textContent = `${configuration.symbol} on ${configuration.chainName}. No wallet connection needed to create your address.`;
 el('asset-symbol').textContent = configuration.symbol;
 el('automatic-status').hidden = !configuration.automaticRelay;
+el('manual-deposit-note').hidden = configuration.mode === 'local' || !!configuration.automaticRelay;
 render();
 if (configuration.automaticRelay) setInterval(() => {
   if (backup && deposit && saved && (!spent || !automaticFinished) && !busy) void act(refresh);

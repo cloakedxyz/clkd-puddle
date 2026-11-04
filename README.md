@@ -7,7 +7,8 @@
 Ordinary token transfers into a RAILGUN private balance, using **ZeroDev Kernel**
 accounts. No recipient setup signature or private wallet keys are needed.
 
-**Unaudited developer preview. Local test funds only. Nothing is published to npm.**
+**Unaudited preview. The website supports a small, manually operated Arbitrum pilot;
+arrange with the operator before funding. Nothing is published to npm.**
 
 ## Run
 
@@ -93,6 +94,8 @@ receiving interface, set `PUDDLE_SITE_CONFIGURATION` to a private, reviewed Arbi
 configuration file after building the SDK. The build checks deployed contracts and
 copies only public route fields and trusted artifacts. It uses the public RPC directly;
 no hosted signer or Puddle backend is required for the manual pilot.
+Vercel uses the reviewed public `deployments/arbitrum.json` bundle, checked against
+the compiled SDK in CI. The current website limit is 0.0001 WETH per address.
 
 [MIT](LICENSE) for original code. Upstream contracts and dependencies retain their
 own licenses; see [notices](sdk/NOTICE). The full wallet/proving engine is a test

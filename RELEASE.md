@@ -86,9 +86,9 @@ The superseded contracts, experiments and deployment manifests have been removed
   consumer installation in [GitHub Actions](https://github.com/cloakedxyz/clkd-puddle/actions/runs/41908723240).
   The source migration merged through [PR #1](https://github.com/cloakedxyz/clkd-puddle/pull/1).
   The updated [website docs](https://puddle.link/docs/) and [API reference](https://puddle.link/docs/api/)
-  are published. Live receiving remains disabled pending the new deployed route.
+  were published with live receiving disabled at that stage.
 
-## Outstanding before public funds
+## Outstanding before general availability
 
 1. Confirm screening and private spend readiness on the new live route. Discovery
    and owner recovery are confirmed; private spending has not been tested.
@@ -120,16 +120,18 @@ a new standard validator and the current restricted RAILGUN executor.
   [standard validator](https://repo.sourcify.dev/42161/0xDb8D974998Ee6918D5CDC9E09eB3BEC31DFB0d95)
   and [RAILGUN executor](https://repo.sourcify.dev/42161/0x107784Ffa2cAdEE9f5Fa3C9c607C09A842eBE589).
   Source verification establishes a code match; it is not a security audit.
-- After the token pin and website changes, all 36 local checks passed, with one
-  deployment-publication check skipped because no public receiving release is
-  enabled. A fresh Arbitrum fork at block **521291782** and an installed SDK package
+- After the token pin and website changes, all 37 local checks passed, including
+  matching the public route bundle to the independently compiled SDK artifacts.
+  A fresh Arbitrum fork at block **521291782** and an installed SDK package
   consumer also passed. The package runtime audit still reports zero known advisories.
 - The manual static site built against the real deployed route, with matching source
   and runtime hashes. A separate hosting-checkout test used no compiler cache or
   prebuilt SDK and completed the manual deposit flow on a disposable local chain.
 
-The website/docs update is published; public receiving remains disabled. A manual
-static receiving build is being checked against the deployed route. Automatic live
+The website is configured for the explicitly requested manual preview with a
+0.0001 WETH per-address UI limit on Arbitrum One, public route
+pins and runtime templates. It requires arranging with the operator before funding;
+no hosted signer or automatic service is provided. Automatic live
 operation, funded bridging, independent security review and npm publication remain
 outstanding.
 See [release preparation](docs/releasing.md).
