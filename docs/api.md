@@ -124,20 +124,22 @@ public recipient data only. Fresh preparation must not reuse note randomness.
 
 ## Public data types
 
-| Type                | Fields                                                                                                                                                           |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RailgunInput`      | Public `recipient` string, `recovery`, `relayer`, `feeRecipient` addresses.                                                                                      |
-| `DepositTerms`      | `recovery`, `relayer`, `feeRecipient`.                                                                                                                           |
-| `DepositConfig`     | The terms plus encrypted `recipient` instructions.                                                                                                               |
-| `DepositQuote`      | `token`, bigint `amount`, bigint `gasFee`, bigint `deadline`.                                                                                                    |
-| `Deployment`        | bigint `chainId`, `factory`, `implementation`, `validator`, `executor`, `pool`, `asset`, bigint `maxGasFee`, six `codeHashes`, `poolImplementation` pin or null. |
-| `DepositRecord`     | Deployment plus `protocol: "railgun"`, `address`, 32-byte `salt`, fixed `config`.                                                                                |
-| `DepositExecution`  | Deposit record plus `quote`.                                                                                                                                     |
-| `RecoveryArtifacts` | Exact-build runtime templates and immutable offsets; import the reviewed `contracts` JSON export.                                                                |
-| `RecoveryFile`      | Versioned JSON form with decimal-string numbers, `depositAddress`, route pins, salt and fixed configuration; no keys or arbitrary calls.                         |
-| `RailgunRecipient`  | `masterPublicKey: bigint`, `viewingPublicKey: Uint8Array`, optional `chainId: bigint` restriction.                                                               |
+| Type                | Fields                                                                                                                                                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RailgunInput`      | Public `recipient` string, `recovery`, `relayer`, `feeRecipient` addresses.                                                                                                                                                                               |
+| `DepositTerms`      | `recovery`, `relayer`, `feeRecipient`.                                                                                                                                                                                                                    |
+| `DepositConfig`     | The terms plus encrypted `recipient` instructions.                                                                                                                                                                                                        |
+| `DepositQuote`      | `token`, bigint `amount`, bigint `gasFee`, bigint `deadline`.                                                                                                                                                                                             |
+| `Deployment`        | bigint `chainId`, `factory`, `implementation`, `validator`, `executor`, `pool`, `asset`, bigint `maxGasFee`, six `codeHashes`, `poolImplementation` and `assetImplementation` pins or null. A proxy asset requires its implementation pin before deposit. |
+| `DepositRecord`     | Deployment plus `protocol: "railgun"`, `address`, 32-byte `salt`, fixed `config`.                                                                                                                                                                         |
+| `DepositExecution`  | Deposit record plus `quote`.                                                                                                                                                                                                                              |
+| `RecoveryArtifacts` | Exact-build runtime templates and immutable offsets; import the reviewed `contracts` JSON export.                                                                                                                                                         |
+| `RecoveryFile`      | Versioned JSON form with decimal-string numbers, `depositAddress`, route pins, salt and fixed configuration; no keys or arbitrary calls.                                                                                                                  |
+| `RailgunRecipient`  | `masterPublicKey: bigint`, `viewingPublicKey: Uint8Array`, optional `chainId: bigint` restriction.                                                                                                                                                        |
 
 The generated TypeScript declarations in the packed candidate are authoritative.
+Version 1 recovery files without `assetImplementation` remain accepted for owner
+recovery. Depositing a proxy token requires its current, reviewed implementation pin.
 Addresses are EVM hex strings except the public RAILGUN input. Do not guess token
 decimals or reuse deployment pins across chains.
 

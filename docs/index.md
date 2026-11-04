@@ -4,8 +4,9 @@ Puddle turns an ordinary token transfer into a RAILGUN private balance through a
 unmodified ZeroDev Kernel account. You keep control of funds that have not been
 shielded through your recovery wallet.
 
-**Unaudited developer preview. The new live ZeroDev pilot is awaiting approval.
-The SDK candidate is not published on npm.**
+**Unaudited preview. A bounded live ZeroDev pilot passed deposit and recovery checks;
+the recipient wallet discovered the deposit and screening is still pending.
+The SDK candidate is not published on npm. Public deposits remain closed.**
 
 ## Receive
 
@@ -46,9 +47,9 @@ Read the [API reference](api.md), [recovery guide](recovery.md),
 
 ## Current limits
 
-The intended first live route is WETH on Arbitrum. The earlier custom-contract
-RAILGUN pilot does not prove the new ZeroDev route. A mined transaction also does
-not prove recipient discovery, screening or private spending.
+The tested live route is WETH on Arbitrum. The new ZeroDev pilot is separate from
+the earlier custom-contract RAILGUN test. Discovery, screening and private spending
+are separate checks; only discovery has been confirmed in the recipient wallet.
 
 Public bridge routes remain disabled. Relay quotes and funding instructions are
 integrated, but funded delivery, refunds and source recovery still need verification.

@@ -7,7 +7,8 @@ import { createRecoveryFile, inspectRecovery } from './recovery.ts';
 export interface RailgunInput extends DepositTerms { recipient: string }
 export function createRailgunAdapter(configuration: Deployment) {
   const deployment = Object.freeze({ ...configuration, codeHashes: Object.freeze({ ...configuration.codeHashes }),
-    poolImplementation: configuration.poolImplementation ? Object.freeze({ ...configuration.poolImplementation }) : null });
+    poolImplementation: configuration.poolImplementation ? Object.freeze({ ...configuration.poolImplementation }) : null,
+    assetImplementation: configuration.assetImplementation ? Object.freeze({ ...configuration.assetImplementation }) : null });
   const adapter = {
     deployment,
     async prepare(provider: Provider, input: RailgunInput): Promise<DepositRecord> {

@@ -344,7 +344,8 @@ el('new-receive').addEventListener('click', () => void act(async () => {
   el('automatic-status').textContent = '';
   el('transaction-status').textContent = ''; render();
 }));
-el('railgun-mode').textContent = configuration.mode === 'local' ? 'ZeroDev + RAILGUN demo · test funds only' : 'ZeroDev + RAILGUN pilot · unaudited';
+el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo · test funds only'
+  : configuration.automaticRelay ? 'Receiving preview' : 'Receiving preview · manual deposit';
 el('route-description').textContent = `${configuration.symbol} on ${configuration.chainName}. No wallet connection needed to create your address.`;
 el('asset-symbol').textContent = configuration.symbol;
 el('automatic-status').hidden = !configuration.automaticRelay;

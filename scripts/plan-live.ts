@@ -100,9 +100,12 @@ export async function planLive(profilePath: string, output: string, maximumNativ
     assert.equal(codeHashes.factory, '0xcc4b1b98f5716bf61042d87bfedd4709a5c9a597c41f3bb0e6fb6fe1a4ebd37a');
     assert.equal(codeHashes.implementation, '0x9c390b4a1d88a48a63dfb485bc4b6117f59e7f48e4138a93b870e1dd35e25fde');
     const poolImplementation = getAddress(`0x${(await local.getStorage(route.pool, implementationSlot)).slice(-40)}`);
+    const assetImplementation = getAddress(`0x${(await local.getStorage(route.asset, implementationSlot)).slice(-40)}`);
     assert.notEqual(poolImplementation, ZeroAddress);
     const deployment: Deployment = {...addresses, chainId: BigInt(route.chainId), maxGasFee: route.maxGasFee, codeHashes,
-      poolImplementation: {address: poolImplementation, codeHash: keccak256(await local.getCode(poolImplementation))}};
+      poolImplementation: {address: poolImplementation, codeHash: keccak256(await local.getCode(poolImplementation))},
+      assetImplementation: assetImplementation === ZeroAddress ? null
+        : {address: assetImplementation, codeHash: keccak256(await local.getCode(assetImplementation))}};
     const latest = await local.getBlock('latest'); assert(latest);
     const quote = {token: route.asset, amount: parseEther('0.0001'), gasFee: parseEther('0.000025'), deadline: BigInt(latest.timestamp + 86400)};
     const {deposit, recovery} = await prepareRailgunReceive(local, deployment, {
@@ -148,7 +151,8 @@ export async function planLive(profilePath: string, output: string, maximumNativ
     assert.equal(await local.getTransactionCount(owner), nonce + 10);
     const estimatedFees = transactions.reduce((sum, transaction) => sum + BigInt(transaction.estimatedNetworkFee), 0n);
     const site = {chainId: String(route.chainId), chainName: 'Arbitrum One', rpcUrl: 'https://arb1.arbitrum.io/rpc',
-      ...addresses, poolImplementation: deployment.poolImplementation, token: route.asset, symbol: 'WETH', decimals: 18,
+      ...addresses, poolImplementation: deployment.poolImplementation, assetImplementation: deployment.assetImplementation,
+      token: route.asset, symbol: 'WETH', decimals: 18,
       relayer: owner, feeRecipient: owner, gasFee: String(quote.gasFee), maxGasFee: String(route.maxGasFee),
       maxAmount: String(quote.amount), codeHashes, mode: 'pilot'};
     const plan = {format: 'puddle-kernel-live-plan', version: 1, status: 'simulated-not-approved', createdAt: new Date().toISOString(),

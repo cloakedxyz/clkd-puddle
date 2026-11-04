@@ -22,6 +22,7 @@ test('Arbitrum: deployed ZeroDev factory/account -> RAILGUN WETH, plus owner rec
     assert.equal(env.deployment.codeHashes.implementation, '0x9c390b4a1d88a48a63dfb485bc4b6117f59e7f48e4138a93b870e1dd35e25fde');
     await verifyDeployment(env.provider, env.deployment, recoveryArtifacts());
     assert(env.deployment.poolImplementation, 'Pin the real pool implementation, not just proxy code.');
+    assert(env.deployment.assetImplementation, 'Pin the WETH implementation, not just proxy code.');
     const recipient = await createRecipient();
     const deposit = await prepareDeposit(env, recipient.address, parseEther('0.0001'), parseEther('0.00001'));
     const file = createRecoveryFile(deposit);

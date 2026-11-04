@@ -32,6 +32,7 @@ async function main() {
       chainId: BigInt(config.chainId), factory: config.factory, pool: config.pool,
       implementation: config.implementation, validator: config.validator, executor: config.executor,
       asset: config.token, maxGasFee: BigInt(config.maxGasFee), codeHashes: config.codeHashes, poolImplementation: config.poolImplementation,
+      assetImplementation: config.assetImplementation ?? null,
     }, { recipient: profile.recipient, recovery: profile.recovery, relayer: config.relayer, feeRecipient: config.feeRecipient },
     { token: config.token, amount, gasFee: BigInt(config.gasFee), deadline: BigInt(block.timestamp + 3600) }, contracts);
     // A fresh directory prevents overwriting an earlier recovery file. Only show

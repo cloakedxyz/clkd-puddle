@@ -10,30 +10,26 @@ import { verifySdkBuild } from '../sdk/verify-build.mjs';
 import { recoveryArtifacts } from './artifacts.ts';
 import { renderApp } from './html.ts';
 import { documentation, renderDocumentation } from './docs.ts';
+import { publicSiteConfiguration, readSiteRelease, requirePublicArbitrum, validateSiteRelease } from './site-release.ts';
+import type { SiteRelease } from './site-release.ts';
+import { isDeepStrictEqual } from 'node:util';
 
 /** Static app and docs. A receiving build requires reviewed, already-deployed contracts. */
-export async function buildSite(directory = 'dist', input?: RailgunSiteConfiguration) {
+export async function buildSite(directory = 'dist', input?: RailgunSiteConfiguration, release?: SiteRelease) {
   const output = resolve(directory);
   let configuration: RailgunSiteConfiguration | undefined;
   let artifacts: ReturnType<typeof recoveryArtifacts> | undefined;
   if (input) {
     const checked = validateRailgunSiteConfiguration(input);
-    if (checked.bridgeOrigins?.length) throw new Error('Public bridging remains disabled pending funded route/recovery tests.');
-    if (checked.mode !== 'pilot') throw new Error('A public receiving build must use pilot mode, without demo wallets.');
-    await verifySdkBuild(); artifacts = recoveryArtifacts();
+    configuration = publicSiteConfiguration(checked);
+    if (release) {
+      await validateSiteRelease(release);
+      if (!isDeepStrictEqual(publicSiteConfiguration(checked), release.configuration)) throw new Error('Site release/configuration mismatch.');
+      artifacts = release.artifacts;
+    } else { await verifySdkBuild(); artifacts = recoveryArtifacts(); }
     const provider = new JsonRpcProvider(checked.rpcUrl, undefined, {batchMaxCount: 1, cacheTimeout: -1});
     try { await verifyDeployment(provider, siteDeployment(checked), artifacts); }
     finally { provider.destroy(); }
-    // Explicit whitelist: never spread profiles, API keys or unrelated build inputs into the browser.
-    configuration = {
-      chainId: checked.chainId, chainName: checked.chainName, rpcUrl: checked.rpcUrl, rpcTransport: 'direct',
-      factory: checked.factory, implementation: checked.implementation, validator: checked.validator,
-      executor: checked.executor, pool: checked.pool, token: checked.token, codeHashes: {...checked.codeHashes},
-      poolImplementation: checked.poolImplementation ? {address: checked.poolImplementation.address, codeHash: checked.poolImplementation.codeHash} : null,
-      maxGasFee: checked.maxGasFee, relayer: checked.relayer, feeRecipient: checked.feeRecipient,
-      symbol: checked.symbol, decimals: checked.decimals, gasFee: checked.gasFee, maxAmount: checked.maxAmount,
-      minAmount: checked.minAmount, automaticRelay: false, mode: 'pilot',
-    };
   }
   await rm(output, {recursive: true, force: true});
   await mkdir(join(output, 'assets'), {recursive: true});
@@ -56,9 +52,10 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const path = process.env.PUDDLE_SITE_CONFIGURATION;
-  const configuration = path ? JSON.parse(await readFile(path, 'utf8')) as RailgunSiteConfiguration : undefined;
-  if (configuration && (configuration.chainId !== '42161' || configuration.rpcUrl !== 'https://arb1.arbitrum.io/rpc')) {
-    throw new Error('The reviewed public pilot route uses Arbitrum One and its public RPC.');
-  }
-  await buildSite('dist', configuration);
+  const releasePath = process.env.PUDDLE_SITE_RELEASE;
+  if (path && releasePath) throw new Error('Choose a site configuration or a reviewed release, not both.');
+  const release = releasePath ? await readSiteRelease(releasePath) : undefined;
+  const configuration = release?.configuration ?? (path ? JSON.parse(await readFile(path, 'utf8')) as RailgunSiteConfiguration : undefined);
+  if (configuration) requirePublicArbitrum(configuration);
+  await buildSite('dist', configuration, release);
 }

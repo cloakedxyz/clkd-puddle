@@ -48,8 +48,9 @@ Amounts can be requoted without changing the account or recipient. Excess, parti
 and late transfers remain recoverable by the owner through Kernel.
 
 The old custom account/factory and unrelated protocol experiments have been removed.
-The earlier live RAILGUN test used those old contracts and **does not validate this
-ZeroDev implementation**. Current evidence is in [RELEASE.md](RELEASE.md).
+A new bounded live ZeroDev → RAILGUN test passed deposit and both recovery checks.
+The recipient wallet discovered its deposit; screening and private spending remain
+separate checks. Current evidence is in [RELEASE.md](RELEASE.md).
 
 ## SDK and verification
 

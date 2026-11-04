@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
+import { lstat, mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import test from 'node:test';
 import { inspectRepository } from '../scripts/check-repo.ts';
+import { readSiteRelease, requirePublicArbitrum, validateSiteRelease } from '../scripts/site-release.ts';
+
+test('published receiving release matches the independently compiled SDK and selected public route', async t => {
+  const path = 'deployments/arbitrum.json';
+  const file = await lstat(path).catch((error: NodeJS.ErrnoException) => { if (error.code !== 'ENOENT') throw error; return null; });
+  if (!file) { t.skip('No live receiving release has been approved or published.'); return; }
+  const release = await readSiteRelease(path); requirePublicArbitrum(release.configuration);
+  await validateSiteRelease(release, true);
+});
 
 test('repository guard rejects private/generated files and redacts secret values', async t => {
   const root = await mkdtemp(join(tmpdir(), 'puddle-repo-'));

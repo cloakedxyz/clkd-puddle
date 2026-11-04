@@ -184,6 +184,21 @@ test('a pool implementation change blocks deposits while independent owner recov
   assert.equal((await inspectRecovery(env.provider, file, recoveryArtifacts())).balance, 0n);
 });
 
+test('asset implementation checks block deposits without disabling saved owner recovery', async () => {
+  const recipient = await createRecipient(); const deposit = await prepareDeposit(env, recipient.address, 10_000_000n);
+  const file = createRecoveryFile(deposit); await fund(env, deposit.address, 123n);
+  await env.provider.send('anvil_setStorageAt', [deposit.asset, implementationSlot, zeroPadValue(await env.attacker.getAddress(), 32)]);
+  await assert.rejects(verifyDeployment(env.provider, deposit, recoveryArtifacts()), /proxy asset requires an implementation pin/);
+  const wrongPin = {...deposit, assetImplementation: {address: env.deployment.factory, codeHash: env.deployment.codeHashes.factory}};
+  await assert.rejects(verifyDeployment(env.provider, wrongPin, recoveryArtifacts()), /asset implementation changed/);
+  // Earlier v1 files omit the token pin; recovery still uses ownership rather than deposit assumptions.
+  const earlier = {...file}; delete earlier.assetImplementation;
+  const restored = parseRecoveryFile(JSON.stringify(earlier));
+  for (const action of ['deploy', 'recover'] as const) await mined(env.recovery.sendTransaction(
+    await recoveryTransaction(env.provider, restored, recoveryArtifacts(), restored.config.recovery, restored.asset, action)));
+  assert.equal((await inspectRecovery(env.provider, restored, recoveryArtifacts())).balance, 0n);
+});
+
 async function workerFixture() {
   const tokenArtifact = env.contracts['test/contracts/DemoToken.sol'].DemoWrappedNative;
   const wrapped = await new ContractFactory(tokenArtifact.abi, `0x${tokenArtifact.evm.bytecode.object}`, env.deployer).deploy();

@@ -101,8 +101,11 @@ export async function createEnvironment(contracts = compile(), fork?: ForkConfig
     const poolImplementationAddress = getAddress(`0x${(await provider.getStorage(addresses.pool, implementationSlot)).slice(-40)}`);
     const poolImplementation = poolImplementationAddress === ZeroAddress ? null
       : {address: poolImplementationAddress, codeHash: keccak256(await provider.getCode(poolImplementationAddress))};
+    const assetImplementationAddress = getAddress(`0x${(await provider.getStorage(addresses.asset, implementationSlot)).slice(-40)}`);
+    const assetImplementation = assetImplementationAddress === ZeroAddress ? null
+      : {address: assetImplementationAddress, codeHash: keccak256(await provider.getCode(assetImplementationAddress))};
     const deployment: Deployment = {...addresses, chainId: (await provider.getNetwork()).chainId,
-      poolImplementation, maxGasFee, codeHashes};
+      poolImplementation, assetImplementation, maxGasFee, codeHashes};
     const adapter = createRailgunAdapter(deployment);
     return {...chain, contracts, fork, wrappedNative, pool, token, factory, implementation, validator, executor, deployment, adapter,
       deployer, sender, relayer, recovery, attacker, treasury, feeCollector};
