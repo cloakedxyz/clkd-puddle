@@ -42,6 +42,8 @@ test('hosted API reference documents every public SDK export and links to the se
   assert.doesNotMatch(html, /\{\{|<script(?! src=)|PrivacyPoolsDeposit|DepositBase|Coming soon: RAILGUN on Ethereum/);
   for (const page of documentation) {
     const content = await readFile(new URL('../dist' + page.path + 'index.html', import.meta.url), 'utf8');
+    assert.doesNotMatch(content, /Unpublished developer preview/);
+    if (page.source === 'docs/index.md') assert.doesNotMatch(content, /ZeroDev|Kernel|```/);
     if (page.source === 'docs/architecture.md') assert.match(content, /unmodified Kernel v3.3/);
     assert.doesNotMatch(content, /0zk1|privateKey\s*[:=]|https?:\/\/(?:localhost|127\.0\.0\.1)/);
   }
@@ -75,7 +77,7 @@ test('static receiving build supports manual relay and clean API docs without a 
       pool: env.deployment.pool, poolImplementation: env.deployment.poolImplementation,
       assetImplementation: env.deployment.assetImplementation, relayer: await env.relayer.getAddress(),
       feeRecipient: await env.feeCollector.getAddress(), token: env.deployment.asset, symbol: 'test USDC', decimals: 6,
-      gasFee: '200000', maxAmount: '1000000000000', mode: 'pilot',
+      gasFee: '200000', minAmount: '100000000', maxAmount: '100000000', mode: 'pilot',
     };
     const release = await createSiteRelease(Object.assign(configuration, {privateRecipient: recipient.address, privateMarker: 'not-public'}));
     await validateSiteRelease(release, true);
@@ -149,11 +151,14 @@ test('static receiving build supports manual relay and clean API docs without a 
       (window as unknown as {staticWalletRequest: (input: unknown) => Promise<unknown>}).staticWalletRequest(request)}; });
     await page.goto(url);
     assert.doesNotMatch(await page.locator('.railgun-card').innerText(), /ZeroDev|Kernel|ERC-7579/);
-    await page.locator('#manual-deposit-note').waitFor({state: 'visible'});
+    assert.equal(await page.locator('#amount-entry').isVisible(), false);
+    assert.equal(await page.locator('#manual-deposit-note').isVisible(), false);
     await page.locator('#private-recipient').fill(recipient.address);
     await page.locator('#recovery-owner').fill(await env.recovery.getAddress());
-    await page.locator('#send-amount').fill('100'); await page.locator('#prepare').click();
+    await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({state: 'visible'});
+    await page.locator('#manual-deposit-note').waitFor({state: 'visible'});
+    assert.equal(await page.locator('#review-amount').innerText(), '100.0 test USDC');
     const download = page.waitForEvent('download'); await page.locator('#save-backup').click();
     const filePath = await (await download).path(); assert(filePath);
     const file = parseRecoveryFile(await readFile(filePath, 'utf8'));

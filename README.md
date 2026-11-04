@@ -4,8 +4,8 @@
 
 <!-- brand:end -->
 
-Ordinary token transfers into a RAILGUN private balance, using **ZeroDev Kernel**
-accounts. No recipient setup signature or private wallet keys are needed.
+Fund your RAILGUN private wallet with an ordinary token transfer.
+Create a receiving address from your RAILGUN address and a recovery wallet.
 
 The website receives WETH on Arbitrum One. An operator completes each private
 deposit; coordinate before sending funds. The SDK is distributed as a repository

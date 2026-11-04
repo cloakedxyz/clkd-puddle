@@ -1,53 +1,43 @@
-# Puddle documentation
+# Receive privately
 
-Puddle receives an ordinary token transfer and deposits it into your RAILGUN private
-wallet. You control funds still at the receiving address through your recovery wallet.
+Puddle turns a normal token transfer into a deposit in your RAILGUN private wallet.
+Create a receiving address, send from your usual wallet and receive privately.
 
-Receive **0.0001 WETH on Arbitrum One** at a Puddle address. WETH is ETH represented
-as a token. An operator completes your private deposit; coordinate before sending.
+The website accepts **0.0001 WETH on Arbitrum One** per receiving address.
+WETH is ETH represented as a token.
 
-## Receive
+## Create your address
 
-1. Enter your public RAILGUN address and a recovery wallet you control.
-2. Review the token, fees and maximum operator gas charge.
-3. Save your recovery file, then send WETH to the displayed receiving address.
-4. The operator completes the private deposit manually.
-5. Check your RAILGUN wallet for receipt, screening and spend readiness.
+1. Enter your RAILGUN address and a recovery wallet you control.
+2. Review the amount, network and fees.
+3. Save your recovery file, then send to your Puddle address.
 
-Preparing an address needs no wallet connection, recipient signature, spending key
-or private viewing key. Each receiving address supports one private deposit. Excess
-and later transfers remain recoverable. Initial transfers and reused recovery wallets
-are publicly linkable.
+You only enter the two addresses. The website supplies the token, network and amount.
+Creating an address needs no wallet connection.
 
-For the operator: restore the saved receiving file, connect the configured operator
-wallet, select **Prepare manual deposit**, review fees, then select **Relay deposit**.
+An operator completes the private deposit. Arrange this before sending funds.
+Check your RAILGUN wallet for the deposit; it becomes available after screening.
+Use a new Puddle address for each deposit.
 
-## Fees and recovery
+## Fees
 
-The service fee is 0.1%, plus gas reimbursement and RAILGUN's pool fee. The website
-shows the estimated private balance and maximum gas charge before funding. The
-operator can change gas reimbursement up to that displayed maximum.
+Puddle charges 0.1%, plus gas reimbursement and RAILGUN's pool fee.
+Review the estimated private balance and maximum gas charge before sending.
+The operator's gas reimbursement can change within that maximum.
 
-Your recovery wallet can recover funds that have not entered RAILGUN, including
-partial, excess and late transfers. It cannot recover an already-shielded balance.
-See [Recovery](recovery.md).
+## Recovery
 
-## Use the SDK
+Your recovery wallet controls funds that have not entered RAILGUN, including
+partial, excess and late transfers. Save the recovery file and keep it private.
+Once deposited, funds are controlled by your RAILGUN wallet.
+See [Recover funds](recovery.md) for the steps.
 
-`@cloakedxyz/puddle@0.1.0-rc.1` is available as a repository build. It is not published
-to npm. Build and install the tarball with ethers v6; Node integrations require
-Node 24.12+.
+The transfer to your Puddle address is public. Reusing a recovery wallet can link
+receiving addresses. Read [Security](../SECURITY.md) for privacy and review details.
 
-```sh
-npm ci --ignore-scripts
-npm run setup
-npm run build:sdk
-npm pack ./sdk
-```
+## Build with Puddle
 
-The SDK prepares encrypted recipient instructions, verifies accounts and deployed
-code, creates recovery files, refreshes quotes and constructs recovery transactions.
-It runs in browsers and Node without the full wallet/proving engine or recipient keys.
-
-See the [API reference](api.md) for functions and types, [Architecture](architecture.md)
-for contract behavior and trust boundaries, and [Relay quotes](bridges.md) for Relay quote helpers.
+Use the SDK to create addresses, check deposits and prepare recovery transactions
+in your app. Start with [SDK installation](api.md#installation) and the
+[API reference](api.md). [Architecture](architecture.md) covers the contracts and
+[Relay quotes](bridges.md) covers the optional bridge quote helpers.

@@ -9,7 +9,6 @@
   </div>
   <h2>Fund your private wallet.</h2>
   <p class="description" id="route-description">Checking the deposit route…</p>
-  <p class="process-note" id="manual-deposit-note" hidden>An operator completes your private deposit. Coordinate before sending funds.</p>
   <div class="notice" id="error" role="alert" hidden></div>
   <form id="receive-form">
     <div class="form-field">
@@ -21,13 +20,18 @@
       <input class="text-input" id="recovery-owner" spellcheck="false" autocomplete="off" placeholder="0x…" aria-describedby="recovery-hint" required>
       <p class="form-hint" id="recovery-hint">Use a wallet you control to recover funds before they enter RAILGUN.</p>
     </div>
-    <div class="amount-box"><label class="field-label" for="send-amount">Amount to send</label>
+    <div class="amount-box" id="amount-entry"><label class="field-label" for="send-amount">Amount to send</label>
       <div class="amount-field"><input id="send-amount" inputmode="decimal" autocomplete="off" placeholder="0.0" required><span class="asset-badge" id="asset-symbol"></span></div>
-      <p class="form-hint" id="amount-hint" hidden></p>
     </div>
     <button class="primary" type="submit" id="prepare">Create receiving address</button>
   </form>
   <section id="receive-details" hidden aria-label="Receiving address">
+    <div class="deposit-review" id="deposit-review" hidden>
+      <span class="field-label">You send</span>
+      <strong id="review-amount"></strong>
+      <span class="form-hint" id="review-network"></span>
+    </div>
+    <p class="process-note" id="manual-deposit-note" hidden>An operator completes your private deposit. Arrange this before sending funds.</p>
     <p id="recipient-summary" class="button-note"></p>
     <p id="recovery-summary" class="button-note"></p>
     <details class="fees" open><summary>Fees</summary>

@@ -158,6 +158,8 @@ a.build-version:hover { color: var(--text); }
 .network-picker > svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--secondary); }
 .railgun-card > .description { margin-bottom: 16px; }
 .process-note { margin: 0 0 24px; color: var(--secondary); font-size: 11px; line-height: 1.6; }
+.deposit-review { display: grid; gap: 8px; margin: 20px 0; padding: 18px 20px; border-radius: 18px; background: var(--field); }
+.deposit-review strong { font-size: 26px; font-weight: 500; letter-spacing: -.5px; }
 #receive-form { display: grid; gap: 20px; }
 .form-field { display: grid; gap: 8px; min-width: 0; }
 .railgun-card .text-input { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; margin: 0; transition: border-color .15s; }

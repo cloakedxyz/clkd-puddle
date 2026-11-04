@@ -1,8 +1,23 @@
 # SDK API reference
 
 `@cloakedxyz/puddle@0.1.0-rc.1` provides JavaScript modules for ethers v6, browsers
-and Node 24.12+. Install the repository-built package using [SDK setup](index.md#use-the-sdk).
-This reference covers the SDK’s functions and types.
+and Node 24.12+. This reference covers the SDK’s functions and types.
+
+## Installation
+
+Build the package from the repository. It is not published to npm.
+Use Node 24.12+ and Foundry 1.7.1:
+
+```sh
+npm ci --ignore-scripts
+npm run setup
+npm run build:sdk
+npm pack ./sdk
+```
+
+Install the generated tarball and ethers v6 in your application. The SDK runs in
+browsers and Node without private recipient keys or the full wallet engine.
+See the [runnable example](../sdk/examples/receive.mjs) for a complete integration.
 
 ## Prepare a receive
 
@@ -177,4 +192,4 @@ owner, input amount, expected output and minimum output as decimal strings.
 The adapter does not prove recorded source recovery ownership or bridge delivery.
 The app's floor allows at most 2% bridge shortfall and enough output for relay fees.
 Use that floor only for the same asset with equal decimals on both chains.
-No production bridge route is enabled. See [Relay quotes](bridges.md).
+The website accepts direct Arbitrum deposits. See [Relay quotes](bridges.md) for integration scope.

@@ -16,6 +16,7 @@ const field = (id: string) => el<HTMLInputElement>(id);
 const configuration = validateRailgunSiteConfiguration(await (await fetch('/configuration.json')).json());
 const artifacts: RecoveryArtifacts = await (await fetch('/contracts.json')).json();
 const deployment = siteDeployment(configuration);
+const fixedAmount = configuration.minAmount === configuration.maxAmount ? configuration.maxAmount : undefined;
 const adapter = createRailgunAdapter(deployment);
 const reader = new JsonRpcProvider(configuration.rpcTransport === 'direct' ? configuration.rpcUrl : `${location.origin}/api/rpc`,
   undefined, { batchMaxCount: 1, cacheTimeout: -1 });
@@ -148,17 +149,20 @@ async function signer(requiredChain = deployment.chainId) {
 }
 function showBackup() {
   if (!backup) return;
+  el('deposit-review').hidden = !deposit;
+  el('review-network').textContent = configuration.bridgeOrigins?.find(source => source.chainId === bridge?.originChainId)?.chainName ?? configuration.chainName;
   el('receiving-address').textContent = bridge?.depositAddress ?? backup.depositAddress;
   el('recovery-summary').textContent = `Recovery: ${backup.config.recovery}`;
   const origin = configuration.bridgeOrigins?.find(source => source.chainId === bridge?.originChainId);
   el('send-instructions').textContent = bridge && origin
     ? `Send exactly ${format(BigInt(bridge.amount))} on ${origin.chainName}. Relay delivers to ${backup.depositAddress} on ${configuration.chainName}; Puddle then shields there. Do not reuse this bridge address.`
-    : `Send only ${configuration.symbol} on ${configuration.chainName}. This address accepts one private deposit; excess and later transfers remain recoverable.`;
+    : `Send only ${configuration.symbol} on ${configuration.chainName}. Use this address for one private deposit. You can recover excess or later transfers.`;
   el('bridge-note').textContent = bridge ? `Bridge recovery depends on Relay. Refund/recovery owner: ${bridge.recoveryOwner}. Save both files. Relay's recovery page is https://relay.link/withdraw. Maximum bridge shortfall: 2%. Use these instructions within 90 seconds; create new instructions if they expire.` : '';
   render();
 }
 async function showFees() {
   if (!deposit) return;
+  el('review-amount').textContent = format(BigInt(bridge?.amount ?? deposit.quote.amount));
   const amount = deposit.quote.amount;
   const feeBps: bigint = await new Contract(configuration.pool, ['function shieldFee() view returns(uint256)'], reader).getFunction('shieldFee')();
   if (feeBps < 0n || feeBps >= 10000n) throw new Error('Unexpected RAILGUN fee.');
@@ -205,7 +209,7 @@ el('receive-form').addEventListener('submit', event => {
     const recipient = field('private-recipient').value.trim();
     const recovery = getAddress(field('recovery-owner').value.trim());
     const sourceChain = sources.value;
-    const value = field('send-amount').value.trim();
+    const value = fixedAmount ? formatUnits(fixedAmount, configuration.decimals) : field('send-amount').value.trim();
     if (!/^[0-9]{1,36}(\.[0-9]{1,18})?$/.test(value)) throw new Error('Enter a decimal token amount.');
     const amount = parseUnits(value, configuration.decimals);
     if (amount < BigInt(configuration.minAmount ?? '1') || amount > BigInt(configuration.maxAmount)) {
@@ -345,12 +349,13 @@ el('new-receive').addEventListener('click', () => void act(async () => {
   el('transaction-status').textContent = ''; render();
 }));
 el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo' : 'Private transfers';
-el('route-description').textContent = `${configuration.symbol} on ${configuration.chainName}. No wallet connection needed to create your address.`;
+el('route-description').textContent = `Receive ${configuration.symbol} on ${configuration.chainName}. No wallet connection needed.`;
 el('asset-symbol').textContent = configuration.symbol;
-if (configuration.minAmount && configuration.minAmount === configuration.maxAmount) {
-  field('send-amount').value = formatUnits(configuration.minAmount, configuration.decimals);
-  el('amount-hint').textContent = `${format(BigInt(configuration.minAmount))} per receiving address.`;
-  el('amount-hint').hidden = false;
+if (fixedAmount) {
+  field('send-amount').value = formatUnits(fixedAmount, configuration.decimals);
+  field('send-amount').required = false;
+  field('send-amount').readOnly = true;
+  el('amount-entry').hidden = true;
 }
 el('automatic-status').hidden = !configuration.automaticRelay;
 el('manual-deposit-note').hidden = configuration.mode === 'local' || !!configuration.automaticRelay;
