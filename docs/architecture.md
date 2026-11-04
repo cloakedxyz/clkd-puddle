@@ -1,100 +1,72 @@
 # Architecture
 
-One path: **ERC-20 transfer → ZeroDev Kernel account → RAILGUN**.
+**ERC-20 transfer → ZeroDev Kernel account → RAILGUN.**
 
-Kernel v3.3 is pinned at `cd697c7e21715d015e0643af22310a99aa17433b`.
-Its account, factory and ECDSA validator are unmodified. Puddle supplies only
-`contracts/RailgunExecutor.sol`, a restricted execution module. There is no
-Puddle account, factory, account upgrade authority or generic relayer batch API.
+Puddle uses unmodified Kernel v3.3 accounts, factory and ECDSA owner validator, pinned
+at `cd697c7e21715d015e0643af22310a99aa17433b`. Its only settlement contract is
+`contracts/RailgunExecutor.sol`, a restricted execution module. Puddle has no custom
+receiving account, factory, account upgrade authority or generic relayer batch API.
 
-The stock contracts are built with Solidity 0.8.28 and Kernel's deployment settings
-to match its verified deployed code. Puddle's module uses Solidity 0.8.32. Both
-profiles are explicit in `foundry.toml`; SDK artifacts contain those exact builds.
+## Receiving account
 
-## Preparation
+The SDK decodes the public RAILGUN address and encrypts recipient instructions locally.
+It derives the receiving address from Kernel's factory, initialization and a fresh salt.
+Initialization fixes the recovery owner and installs the module with a fixed relayer,
+fee recipient and encrypted recipient hash. No recipient signature or private key is needed.
 
-The SDK decodes the public RAILGUN address and prepares an encrypted shield note
-locally. No private recipient data or signature is needed. It builds Kernel's initial
-configuration with the recovery owner and installed module. The module's terms bind
-the relayer, fee recipient and encrypted recipient hash. The ordinary Kernel factory
-creates the account at an address independently derived by the SDK.
-
-The trusted deployment fixes the factory, implementation, validator, module, token,
-pool and gas ceiling. Pool/token implementation pins, runtime code hashes, built contract artifacts and module getters
-are checked before funding. A configuration returned by an untrusted API cannot
-serve as its own trusted source. Save recovery before showing the account address.
+Before funding, the SDK checks the chain, deployed code, proxy implementations, module
+configuration and account ownership against trusted deployment pins and build artifacts.
+An untrusted API response cannot serve as its own trust source. Recovery is saved before
+the funding address is shown.
 
 ## Settlement
 
-A quote contains gross amount, gas reimbursement and deadline. It can change without
-changing the account address or recipient. Only the bound relayer can submit it.
-The module creates this complete batch itself:
+Only the configured relayer can submit a deposit quote. The quote supplies amount,
+gas reimbursement and expiry; changing it preserves the receiving address, owner,
+fee parties and encrypted recipient.
 
-1. Reset token allowance and approve the exact pool amount.
-2. Shield exactly one fixed-recipient ERC-20 note into the configured RAILGUN pool.
-3. Clear allowance and pay the 0.1% service fee plus capped gas reimbursement.
-4. Check actual account debit, fee receipt and zero allowance.
+The module performs one complete batch:
 
-Kernel uses revert-on-failure execution. Any failure rolls back deployment, transfers,
-fees and the use flag. Success makes the account single-use for this module, including
-after uninstall/reinstall. Excess and later transfers remain owner-recoverable.
+1. Reset allowance and approve the exact pool amount.
+2. Shield one fixed-recipient ERC-20 note into the configured RAILGUN pool.
+3. Clear allowance and pay the 0.1% service fee plus bounded gas reimbursement.
+4. Check the account debit, fee receipt and zero allowance.
 
-The relayer pays ordinary transaction gas. This direct module path needs no bundler,
+Failure rolls back deployment, transfers, fees and the use flag. Success permanently
+uses the account's deposit action, including after module removal and reinstallation.
+Excess and later transfers remain recoverable by the owner.
+
+The operator pays native transaction gas. The direct module path uses no bundler,
 paymaster, per-account EntryPoint deposit or recipient account-operation signature.
-The local fixture uses a zero EntryPoint because it only exercises direct module and
-owner calls; production must use the reviewed deployed Kernel for the target chain.
+The website currently requires manual operator execution.
 
-## Automatic operator
+## Recovery and trust
 
-`scripts/relay-worker.ts` supplies an optional durable queue for Arbitrum WETH.
-The operator provides a connected signer, reviewed deployment/artifacts and an
-explicit policy: fee recipient, minimum/maximum amount, per-transaction native fee
-cap, total native spending budget, confirmation count and maximum job count.
-The worker does not load keys. Default pilot startup never creates a signer.
+The recovery wallet owns the Kernel account. It can deploy an undeployed account through
+the standard factory and transfer unshielded assets to itself without the Puddle
+operator, executor permission, API or an unexpired quote. Pool/token deposit checks
+are skipped for recovery; a token still needs to function for its transfer to succeed.
+Already-shielded funds are controlled by the RAILGUN wallet.
 
-The site can receive the worker as the fourth argument to `startRailgunSite`.
-It checks that the site and worker routes match, starts polling and stops the worker
-on shutdown. The browser saves recovery before registering encrypted instructions
-and revealing funding. It polls deposit status without a recipient wallet connection.
+Saved files contain public configuration and encrypted recipient instructions, not
+keys or arbitrary imported calls. The SDK reconstructs the account and rejects changed
+ownership or account implementation. Reused recovery owners publicly link accounts.
 
-Before signing, the worker verifies the route, owner terms, actual funding, nonce and
-gas estimate. WETH reimbursement uses native wei directly; it includes a gas-limit
-buffer and must fit the module cap. The RPC estimate includes Arbitrum's data fee.
-Other assets need a separately reviewed pricing policy and are not automated.
+RAILGUN governance, screening and token governance are external dependencies. A deposit
+receipt does not prove discovery or spend readiness; those are checked in the recipient
+wallet. [Bridge recovery](bridges.md) has a separate provider dependency.
 
-The private queue saves signed bytes, transaction hash and worst-case native fee
-reservation to disk before broadcast. A restart checks that same hash and reuses
-the same signed transaction if necessary. It never silently signs a replacement.
-Confirmed receipts are checked again; a changed or missing block returns the original
-hash to reconciliation rather than allocating a new nonce.
-Reservations remain charged against the total budget even after confirmation;
-restarting cannot reset the budget. A failed transaction, expired signed quote or
-conflicting nonce needs operator review. Funds still in the account remain recoverable.
+## Builds and local automation
 
-Use a dedicated operator wallet, private directory (0700) and queue file (0600).
-Only one process can open a queue. A leftover `operator.lock/owner.json` identifies
-the previous process; verify it has stopped and reconcile recorded hashes before
-removing its lock. Never delete a queue to bypass its budget or pending transaction.
-Call `close()` on shutdown. The local automatic demo uses disposable funds and
-removes its queue when its temporary chain is stopped.
+Stock Kernel contracts use Solidity 0.8.28 to match deployed code; Puddle's module uses
+Solidity 0.8.32. Both profiles are pinned in `foundry.toml`. The SDK ships matching
+runtime templates, and the website's public deployment bundle is checked against an
+independent build in CI and against deployed code before publication.
+The live route's addresses, code hashes and runtime templates are in
+[the Arbitrum deployment bundle](../deployments/arbitrum.json).
 
-## Recovery
-
-Saved recovery data contains public configuration and encrypted recipient instructions,
-not keys or arbitrary executable calls. The SDK reconstructs initialization and checks
-the account address/code and owner. If necessary, the owner deploys through Kernel's
-factory, then calls Kernel to transfer the selected balance to itself. No Puddle API,
-relayer, executor permission or unexpired quote is required. Pool upgrades or outages
-block new deposits without blocking this owner-recovery path.
-
-Recovery works before shielding and for excess/late assets. Already-private funds
-are controlled by the RAILGUN wallet. Owner-authorized account upgrades and ownership
-changes are possible; the SDK detects changed assumptions instead of silently trusting
-them. Verify wallet discovery, screening and private spending separately.
-
-## Scope
-
-Standard ERC-20 tokens only. The pool and token are reviewed route dependencies.
-The account owner can revoke the module or recover at any time. This is deliberate
-self-custody. A reused owner publicly links accounts. Bridging is a separate provider
-trust boundary, described in [bridges.md](bridges.md).
+The repository also includes an optional local operator worker and automatic demo.
+The worker persists signed transactions before broadcast, resumes the same hash,
+checks confirmations and preserves per-transaction and total spending budgets across
+restarts. Failed, expired or conflicting jobs need operator review. It runs locally with disposable funds. See [scripts/relay-worker.ts](../scripts/relay-worker.ts) and the
+[local demo instructions](../README.md#run).

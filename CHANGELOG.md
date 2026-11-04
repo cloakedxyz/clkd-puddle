@@ -8,5 +8,5 @@
 - Remove unrelated protocol demos, old contracts and experimental account comparisons.
 - Keep one public setup, check command and package-consumer verification path.
 
-This is an unpublished, unaudited candidate. The old custom-contract live test does
-not validate the ZeroDev release. See [RELEASE.md](RELEASE.md).
+The SDK is distributed as a repository build. Current verification and review status
+are recorded in [RELEASE.md](RELEASE.md).

@@ -82,7 +82,7 @@ h1 em { color: var(--accent); font-style: inherit; }
 .launch-card h2 { font-size: 25px; }
 .launch-card .description { margin-bottom: 24px; }
 .launch-steps { padding-left: 18px; margin: 0 0 28px; color: var(--secondary); font-size: 12px; line-height: 2.4; }
-.launch-status { padding: 16px; margin: 0; border-radius: 16px; background: var(--field); text-align: center; font-size: 12px; }
+.launch-status { display: block; padding: 16px; margin: 0; border-radius: 16px; background: var(--field); text-align: center; font-size: 12px; text-decoration: none; }
 .logo-phrase { display: block; white-space: nowrap; margin-top: 3px; }
 .logo-stack { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 5px; }
 .logo-stack > span { display: grid; place-items: center; width: 32px; height: 32px; border: 2px solid var(--background); border-radius: 11px; background: var(--field); }
@@ -149,8 +149,37 @@ a.build-version:hover { color: var(--text); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
 }
-/* The RAILGUN integration demo uses the same receiving SDK as wallet integrations. */
-.railgun-card textarea, .railgun-card > form > input { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0 16px; border: 1px solid var(--border, #ddd); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.railgun-card { padding: 28px; }
+.receive-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.receive-heading .preview-label { margin: 0; font-size: 11px; }
+.network-picker { position: relative; flex-shrink: 0; }
+.network-picker select { appearance: none; border: 1px solid var(--line); border-radius: 20px; background: var(--field); padding: 8px 30px 8px 12px; color: var(--text); font-size: 11px; cursor: pointer; max-width: 190px; }
+.network-picker > svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--secondary); }
+.railgun-card > .description { margin-bottom: 16px; }
+.process-note { margin: 0 0 24px; color: var(--secondary); font-size: 11px; line-height: 1.6; }
+#receive-form { display: grid; gap: 20px; }
+.form-field { display: grid; gap: 8px; min-width: 0; }
+.railgun-card .text-input { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; margin: 0; transition: border-color .15s; }
+.railgun-card .text-input:hover { border-color: var(--secondary); }
+.railgun-card textarea.text-input { min-height: 84px; resize: vertical; }
+.railgun-card .text-input::placeholder { color: var(--muted); }
+.form-hint { margin: 0; font-size: 11px; line-height: 1.5; color: var(--secondary); }
+.asset-badge { flex-shrink: 0; border: 1px solid var(--line); border-radius: 20px; padding: 7px 11px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: 500; }
+.railgun-card .amount-field { margin-top: 12px; }
+.railgun-card .amount-field input { font-size: 38px; line-height: 1.15; }
+.railgun-card .amount-box .form-hint { margin-top: 10px; color: var(--muted); }
+.restore-panel { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 18px; color: var(--secondary); font-size: 12px; }
+.restore-panel > summary { gap: 12px; padding: 4px 0; }
+.restore-panel > summary svg { transition: transform .15s; }
+.restore-panel[open] > summary svg { transform: rotate(180deg); }
+.restore-body { display: grid; gap: 10px; padding-top: 18px; }
+.restore-body input[type="file"] { width: 100%; min-width: 0; box-sizing: border-box; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--secondary); font-size: 11px; }
+.restore-body input::file-selector-button { margin-right: 10px; padding: 9px 11px; border: 0; border-radius: 8px; color: var(--text); background: var(--field); font: inherit; cursor: pointer; }
+.receive-footer { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0 0; color: var(--muted); font-size: 11px; }
+.receive-footer a { color: var(--secondary); text-decoration: none; }
+.receive-footer a:hover { color: var(--text); }
 .railgun-address { display: block; overflow-wrap: anywhere; padding: 12px 0; }
 .railgun-card .button-note { overflow-wrap: anywhere; }
 .railgun-card #wallet-tools { margin-top: 16px; }
+@media (max-width: 540px) { .railgun-card { padding: 22px; } .receive-heading { gap: 10px; } .network-picker select { max-width: 160px; } }

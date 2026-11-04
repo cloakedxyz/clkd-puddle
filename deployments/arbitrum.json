@@ -290,7 +290,7 @@
       }
     }
   },
-  "sdkBuildHash": "5b1cd19dabf35f85070fe5a96e62c4515db19537a966baa0bf92a1fd1beefe9d",
+  "sdkBuildHash": "ce3cbd22bc75ca662a5b48be14b665c5dda4a32759cfe8bd9cd74636ac056c25",
   "sourceHashes": {
     "package.json": "9545c0d2ca8b4f38dd3f450a9f22c14a0599cd02faa51332a73599ba60f4817d",
     "package-lock.json": "4b8c3321ab387d592dc240f07da2c188f27ebda8078b5dc9fdbd31e8363d6423",
@@ -308,7 +308,7 @@
     "sdk/tsconfig.json": "7ac166acc174d2d761b7f54e2952fbebf4d8131560a7cc61f00d99fe23e8f98a",
     "sdk/verify-build.mjs": "3836855ca580df5e61493fc9b6cfa48475e65e4eb9fc3130741eac2edcf458d2",
     "sdk/examples/receive.mjs": "3c308627f2d4e3115b22ebd45e2f17c49df3981b7f7a294fdec8ad0eabe2f306",
-    "sdk/README.md": "369395a5c737c03bdcc092318b0f69d66670bc2f33ff21db816442130b226a73",
+    "sdk/README.md": "865ce1e509f944d0b3b78a6a7b0d9f970f702932dc001fa2be07e3c464549684",
     "sdk/SECURITY.md": "052dd8d9bfe4f62fd355715c2b77c2b797db85fd8137045c8e0733a4187f6774",
     "sdk/NOTICE": "3c55febb1e74bcea8ee7c938e220d5c52ccf95d1c74554b0d833055d50b212c0",
     "scripts/build-sdk.ts": "5bbb79d8692fc7d652869eea39d82e86758252fd62493444880d8a2233cce1a1",

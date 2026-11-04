@@ -1,6 +1,7 @@
 # Puddle SDK
 
-**ZeroDev Kernel + RAILGUN. Unpublished, unaudited candidate `0.1.0-rc.1`.**
+Receiving, quotes and owner recovery for **ZeroDev Kernel + RAILGUN**.
+Version `0.1.0-rc.1` is distributed as a repository build.
 
 Prepare an ordinary ERC-20 receiving account from a public RAILGUN address and
 recovery owner. The SDK runs in browsers and Node 24.12+, without recipient keys,
@@ -16,8 +17,7 @@ npm run build:sdk
 npm pack ./sdk
 ```
 
-Install the generated tarball and ethers v6 in an integration. The proposed name
-`@cloakedxyz/puddle` is not yet available on npm. Normal packing verifies build hashes;
+Install the generated `@cloakedxyz/puddle` tarball and ethers v6 in your integration. Normal packing verifies build hashes;
 rebuild after source edits. Do not bypass the guard with `--ignore-scripts` when packing.
 
 ## Prepare
@@ -80,8 +80,9 @@ and are rejected by verification.
 ## Optional bridge adapter
 
 `@cloakedxyz/puddle/relay` contains `relayFundingRequest`, `validateRelayFundingQuote`
-and `minimumMatchingAssetOutput`. It is a provider-response checker, not a validated
-bridge route or independent recovery guarantee. No production route is enabled.
+and `minimumMatchingAssetOutput`. These build and check Relay quotes; they do not
+submit transfers, track delivery or process refunds. Bridge recovery uses Relay’s
+authorization; account recovery controls funds that have reached the Kernel address.
 
 Original code is MIT; dependencies and built upstream contracts retain their own
 licenses. See NOTICE and SECURITY.md. `npm run test:sdk-package` checks an actual

@@ -8,7 +8,7 @@ export const documentation = [
   {source: 'docs/api.md', path: '/docs/api/', label: 'SDK API reference'},
   {source: 'docs/recovery.md', path: '/docs/recovery/', label: 'Recovery'},
   {source: 'docs/architecture.md', path: '/docs/architecture/', label: 'Architecture'},
-  {source: 'docs/bridges.md', path: '/docs/bridges/', label: 'Bridges'},
+  {source: 'docs/bridges.md', path: '/docs/bridges/', label: 'Relay quotes'},
   {source: 'SECURITY.md', path: '/docs/security/', label: 'Security'},
 ];
 const anchor = (text: string) => text.toLowerCase().replace(/[`*]/g, '').replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-');

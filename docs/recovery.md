@@ -1,6 +1,6 @@
 # Recover funds
 
-Your recovery wallet owns the ZeroDev Kernel receiving account. It can recover
+Your recovery wallet controls the Puddle receiving account. It can recover
 funds that have not entered RAILGUN, including partial, excess and late transfers.
 It cannot withdraw funds that have already been shielded into the private wallet.
 
@@ -57,4 +57,4 @@ it must be able to call Kernel directly. Changing account ownership or upgrading
 Kernel invalidates the original saved assumptions and is rejected by verification.
 
 Bridge funds still held by Relay have a separate provider-assisted recovery process.
-See [bridge scope](bridges.md) and the [SDK API reference](api.md).
+See [Relay quotes](bridges.md) and the [SDK API reference](api.md).
