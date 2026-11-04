@@ -15,6 +15,7 @@ import { renderApp } from './html.ts';
 import { brand } from './brand.ts';
 import { openRelayWorker } from './relay-worker.ts';
 import type { RelayWorker } from './relay-worker.ts';
+import { chainLogoFiles } from '../app/networks.ts';
 import { documentation, renderDocumentation } from './docs.ts';
 
 export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5177,
@@ -55,6 +56,7 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
   for (const asset of ['metamask', 'rainbow', 'rabby', 'railgun']) {
     files.set(`/assets/${asset}.svg`, [await readFile(`app/assets/${asset}.svg`), 'image/svg+xml']);
   }
+  for (const asset of chainLogoFiles) files.set('/' + asset, [await readFile('app/' + asset), 'image/png']);
   if (demo) {
     if (configuration.mode !== 'local' || configuration.chainId !== '31337') throw new Error('Demo actions are local only.');
     files.set('/demo.json', [JSON.stringify({ recipient: demo.recipient, recovery: demo.recovery, amount: demo.amount ?? '100' }), 'application/json']);

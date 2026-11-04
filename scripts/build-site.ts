@@ -13,6 +13,7 @@ import { documentation, renderDocumentation } from './docs.ts';
 import { publicSiteConfiguration, readSiteRelease, requirePublicArbitrum, validateSiteRelease } from './site-release.ts';
 import type { SiteRelease } from './site-release.ts';
 import { isDeepStrictEqual } from 'node:util';
+import { chainLogoFiles } from '../app/networks.ts';
 
 /** Static app and docs. A receiving build requires reviewed, already-deployed contracts. */
 export async function buildSite(directory = 'dist', input?: RailgunSiteConfiguration, release?: SiteRelease) {
@@ -32,7 +33,7 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
     finally { provider.destroy(); }
   }
   await rm(output, {recursive: true, force: true});
-  await mkdir(join(output, 'assets'), {recursive: true});
+  await mkdir(join(output, 'assets/chains'), {recursive: true});
   await build({entryPoints: ['app/theme.ts', 'app/site.ts', ...(configuration ? ['app/railgun.ts'] : [])],
     outdir: output, bundle: true, format: 'esm', platform: 'browser', target: 'es2022', minify: true});
   await writeFile(join(output, 'index.html'), await renderApp(configuration ? 'railgun' : 'public'));
@@ -45,7 +46,7 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
     await mkdir(target, {recursive: true});
     await writeFile(join(target, 'index.html'), await renderDocumentation(page));
   }
-  for (const file of ['style.css', 'docs.css', 'assets/metamask.svg', 'assets/rainbow.svg', 'assets/rabby.svg', 'assets/railgun.svg']) {
+  for (const file of ['style.css', 'docs.css', 'assets/metamask.svg', 'assets/rainbow.svg', 'assets/rabby.svg', 'assets/railgun.svg', ...chainLogoFiles]) {
     await copyFile(join('app', file), join(output, file));
   }
 }

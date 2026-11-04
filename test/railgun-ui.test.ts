@@ -46,6 +46,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     assert.equal(await page.locator('#private-recipient').isDisabled(), true);
     assert.equal(await page.locator('#recovery-owner').isDisabled(), true);
     assert.equal(await page.locator('#source-chain').isDisabled(), true);
+    assert.equal(await page.locator('#chain-menu-toggle').isDisabled(), true);
     // Even a programmatic edit during the pending read cannot relabel the prepared recipient.
     await page.locator('#private-recipient').evaluate(element => { (element as HTMLTextAreaElement).value = 'changed while preparing'; });
     releaseRead();
@@ -125,7 +126,9 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     });
     await page.reload();
     await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
-    await page.locator('#source-chain').selectOption('8453');
+    await page.locator('#chain-menu-toggle').click();
+    await page.locator('#chain-option-8453').click();
+    assert.match(await page.locator('#selected-chain-logo').getAttribute('src') ?? '', /base\.png$/);
     await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#error').isVisible(), false, await page.locator('#error').textContent() ?? '');

@@ -12,6 +12,7 @@ import { createSiteRelease, readSiteRelease, validateSiteRelease } from '../scri
 import { createEnvironment, createRecipient, decryptDeposit, fund } from './helpers.ts';
 import { parseRecoveryFile } from '../sdk/index.ts';
 import type { RailgunSiteConfiguration } from '../app/configuration.ts';
+import { chainLogoFiles } from '../app/networks.ts';
 
 test('standalone landing page uses product copy and contains no deposit tooling or private data', async () => {
   const output = new URL('../dist/', import.meta.url);
@@ -23,7 +24,7 @@ test('standalone landing page uses product copy and contains no deposit tooling 
   assert.doesNotMatch(html, /\{\{|localhost|127\.0\.0\.1|<form|\/api\/|0zk1|RAILGUN on Ethereum/);
   const files = await readdir(output, { recursive: true });
   assert.deepEqual(files.sort(), ['assets', 'assets/metamask.svg', 'assets/rabby.svg', 'assets/railgun.svg',
-    'assets/rainbow.svg', 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs',
+    'assets/rainbow.svg', 'assets/chains', ...chainLogoFiles, 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs',
     ...documentation.flatMap(page => page.path === '/docs/' ? ['docs/index.html']
       : [page.path.slice(1, -1), page.path.slice(1) + 'index.html'])].sort());
   for (const file of ['site.js', 'theme.js']) {
@@ -65,7 +66,7 @@ test('static receiving build supports manual relay and clean API docs without a 
     const file = files.get(path.endsWith('/') ? path + 'index.html' : path);
     if (!file) { response.writeHead(404).end(); return; }
     const extension = path.endsWith('/') ? 'html' : path.split('.').at(-1);
-    const mime = {html: 'text/html', css: 'text/css', js: 'text/javascript', json: 'application/json', svg: 'image/svg+xml'};
+    const mime = {html: 'text/html', css: 'text/css', js: 'text/javascript', json: 'application/json', svg: 'image/svg+xml', png: 'image/png'};
     response.writeHead(200, {'Content-Type': mime[extension as keyof typeof mime] ?? 'application/octet-stream',
       'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ${new URL(env.provider._getConnection().url).origin}; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`}).end(file);
   });
@@ -151,12 +152,20 @@ test('static receiving build supports manual relay and clean API docs without a 
       (window as unknown as {staticWalletRequest: (input: unknown) => Promise<unknown>}).staticWalletRequest(request)}; });
     await page.goto(url);
     assert.doesNotMatch(await page.locator('.railgun-card').innerText(), /ZeroDev|Kernel|ERC-7579/);
+    await page.getByRole('button', {name: 'Fund from Local test chain', exact: true}).waitFor();
+    await page.locator('#chain-menu-toggle').click();
+    assert.equal(await page.locator('#chain-menu img').count(), 6);
+    await page.waitForFunction(() => Array.from(document.querySelectorAll<HTMLImageElement>('#chain-menu img')).every(image => image.complete && image.naturalWidth > 0));
+    assert.equal(await page.locator('#chain-option-1').isDisabled(), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#chain-menu').isVisible(), false);
     assert.equal(await page.locator('#amount-entry').isVisible(), false);
     assert.equal(await page.locator('#manual-deposit-note').isVisible(), false);
     await page.locator('#private-recipient').fill(recipient.address);
     await page.locator('#recovery-owner').fill(await env.recovery.getAddress());
     await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({state: 'visible'});
+    assert.equal(await page.locator('#chain-menu-toggle').isDisabled(), true);
     await page.locator('#manual-deposit-note').waitFor({state: 'visible'});
     assert.equal(await page.locator('#review-amount').innerText(), '100.0 test USDC');
     const download = page.waitForEvent('download'); await page.locator('#save-backup').click();
