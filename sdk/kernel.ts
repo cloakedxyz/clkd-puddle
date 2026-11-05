@@ -104,6 +104,7 @@ function normalizedRuntime(code: string, artifact: RuntimeArtifact) {
   return result;
 }
 export async function verifyDeployment(provider: Provider, deployment: Deployment, artifacts?: RecoveryArtifacts, recoveryOnly = false) {
+  deployment = structuredClone(deployment); artifacts = artifacts ? structuredClone(artifacts) : undefined;
   requireThat((await provider.getNetwork()).chainId === deployment.chainId, 'Wrong chain.');
   requireThat(deployment.maxGasFee >= 0n && deployment.maxGasFee < 1n << 120n, 'Invalid gas policy.');
   // Owner recovery must continue when the pool is paused, upgraded or unavailable.
@@ -116,7 +117,10 @@ export async function verifyDeployment(provider: Provider, deployment: Deploymen
       else requireThat(implementation === ZeroAddress, `A proxy ${role} requires an implementation pin.`);
     }
   }
-  if (artifacts) requireThat(artifacts.format === 'puddle-kernel-artifacts' && artifacts.version === 1, 'Wrong trusted artifacts.');
+  requireThat(!recoveryOnly || artifacts, 'Trusted artifacts are required for recovery.');
+  if (artifacts) requireThat(artifacts.format === 'puddle-kernel-artifacts' && artifacts.version === 1
+    && artifacts.contracts && ['factory', 'implementation', 'validator', 'executor']
+      .every(name => Object.hasOwn(artifacts.contracts, name)), 'Incomplete or wrong trusted artifacts.');
   const names = recoveryOnly ? ['factory', 'implementation', 'validator', 'executor'] as const
     : ['factory', 'implementation', 'validator', 'executor', 'pool', 'asset'] as const;
   for (const name of names) {
@@ -141,6 +145,7 @@ export async function verifyDeployment(provider: Provider, deployment: Deploymen
     && await module.getFunction('maxTokenGasFeeBps')() === 500n, 'Wrong multi-asset policy.');
 }
 export async function verifyAccount(provider: Provider, record: DepositRecord, checkExecutor = true) {
+  record = structuredClone(record);
   requireThat(record.address === predictAddress(record, record.config, record.salt), 'Account configuration/address mismatch.');
   const code = await provider.getCode(record.address);
   if (code === '0x') return false;
@@ -167,7 +172,8 @@ export function createRecord(deployment: Deployment, config: DepositConfig, salt
   return { ...deployment, codeHashes: { ...deployment.codeHashes }, protocol: 'railgun', config: { ...config }, salt, address };
 }
 export async function validateDeposit(adapter: {deployment: Readonly<Deployment>}, record: DepositRecord, provider: Provider) {
-  const expected = adapter.deployment;
+  record = structuredClone(record);
+  const expected = structuredClone(adapter.deployment);
   requireThat(!!record.multiAsset === !!expected.multiAsset, 'Wrong asset mode.');
   requireThat(record.protocol === 'railgun' && record.chainId === expected.chainId && record.maxGasFee === expected.maxGasFee,
     'Wrong deposit route.');
@@ -186,6 +192,7 @@ export async function validateDeposit(adapter: {deployment: Readonly<Deployment>
   await verifyAccount(provider, record);
 }
 export async function inspectDeposit(adapter: {deployment: Readonly<Deployment>}, deposit: DepositExecution, provider: Provider) {
+  deposit = structuredClone(deposit);
   await validateDeposit(adapter, deposit, provider);
   const balance: bigint = deposit.quote.native ? await provider.getBalance(deposit.address)
     : await new Contract(deposit.quote.token, tokenABI, provider).getFunction('balanceOf')(deposit.address);
@@ -194,6 +201,7 @@ export async function inspectDeposit(adapter: {deployment: Readonly<Deployment>}
     ready: !spent && balance >= deposit.quote.amount };
 }
 export async function validateQuote(provider: Provider, deployment: Deployment, quote: DepositQuote) {
+  deployment = structuredClone(deployment); quote = structuredClone(quote);
   requireThat((deployment.multiAsset || same(quote.token, deployment.asset)) && quote.amount > 0n && quote.amount < 1n << 120n
     && quote.gasFee >= 0n && (deployment.multiAsset && !same(quote.token, deployment.asset) ? quote.gasFee <= quote.amount / 20n : quote.gasFee <= deployment.maxGasFee) && quote.gasFee + quote.amount / 1000n < quote.amount
     && quote.deadline > 0n && quote.deadline < 1n << 48n, 'Invalid amount, asset, fee or expiry.');
@@ -212,8 +220,10 @@ export async function validateQuote(provider: Provider, deployment: Deployment, 
   requireThat(block && BigInt(block.timestamp) <= quote.deadline, 'Deposit quote expired.');
 }
 export async function relayDeposit(adapter: {deployment: Readonly<Deployment>}, deposit: DepositExecution, signer: Signer) {
+  deposit = structuredClone(deposit);
+  const route = {deployment: structuredClone(adapter.deployment)};
   requireThat(signer.provider && same(await signer.getAddress(), deposit.config.relayer), 'Connect the designated relayer wallet.');
-  const state = await inspectDeposit(adapter, deposit, signer.provider);
+  const state = await inspectDeposit(route, deposit, signer.provider);
   requireThat(!state.spent && state.ready, 'Account already used or insufficiently funded.');
   await validateQuote(signer.provider, deposit, deposit.quote);
   return signer.sendTransaction({ to: deposit.executor, chainId: deposit.chainId, value: 0n,

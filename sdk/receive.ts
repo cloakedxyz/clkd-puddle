@@ -12,6 +12,7 @@ export function createRailgunAdapter(configuration: Deployment) {
   const adapter = {
     deployment,
     async prepare(provider: Provider, input: RailgunInput): Promise<DepositRecord> {
+      input = structuredClone(input);
       await verifyDeployment(provider, deployment);
       const record = createRecord(deployment, { recipient: await prepareRailgunRecipient(input.recipient, deployment.chainId),
         recovery: input.recovery, relayer: input.relayer, feeRecipient: input.feeRecipient });
@@ -19,6 +20,7 @@ export function createRailgunAdapter(configuration: Deployment) {
       return record;
     },
     async quote(provider: Provider, record: DepositRecord, quote: DepositQuote): Promise<DepositExecution> {
+      record = structuredClone(record); quote = structuredClone(quote);
       await validateDeposit(adapter, record, provider);
       await validateQuote(provider, deployment, quote);
       return { ...record, config: { ...record.config }, quote: { ...quote } };
@@ -30,6 +32,8 @@ export function createRailgunAdapter(configuration: Deployment) {
 /** Trusted local recipient preparation and exact Kernel/module build checks before funding. */
 export async function prepareRailgunReceive(provider: Provider, deployment: Deployment,
   input: RailgunInput, quote: DepositQuote, artifacts: RecoveryArtifacts) {
+  deployment = structuredClone(deployment); input = structuredClone(input);
+  quote = structuredClone(quote); artifacts = structuredClone(artifacts);
   const adapter = createRailgunAdapter(deployment);
   const record = await adapter.prepare(provider, input);
   await verifyDeployment(provider, deployment, artifacts);

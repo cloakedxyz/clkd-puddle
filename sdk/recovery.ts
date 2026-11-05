@@ -85,6 +85,8 @@ export async function inspectRecovery(provider: Provider, input: RecoveryFile, a
 }
 export async function recoveryTransaction(provider: Provider, file: RecoveryFile, artifacts: RecoveryArtifacts,
   owner: string, asset = file.asset, action: 'deploy' | 'recover' = 'recover'): Promise<TransactionRequest> {
+  // Use this validated copy for both checks and the transaction, across every await.
+  file = parseRecoveryFile(JSON.stringify(file));
   const state = await inspectRecovery(provider, file, artifacts, asset);
   const record = recoveryRecord(file);
   requireThat(getAddress(owner) === record.config.recovery, 'Connect the recovery owner wallet.');
