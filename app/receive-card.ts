@@ -27,7 +27,10 @@ export function renderReceiveSteps(prepared: boolean, saved: boolean, spent: boo
   el('save-recovery-gate').hidden = saved;
   el('receive-info').hidden = !saved;
   el('backup-status').hidden = true;
-  for (const id of ['balance-status', 'refresh-deposit', 'wallet-tools', 'new-receive']) el(id).hidden = !saved;
+  for (const id of ['balance-status', 'refresh-deposit', 'wallet-tools']) el(id).hidden = !saved;
+  el('new-receive').hidden = false;
+  el('new-receive').textContent = saved ? 'Create another address' : 'Back to setup';
+  document.querySelector<HTMLElement>('.restore-panel')!.hidden = prepared;
   el('deposit-review').hidden = !quoted;
   el('net-amount').parentElement!.hidden = !quoted;
   const save = el('save-backup');

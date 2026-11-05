@@ -194,7 +194,6 @@ el('restore-backup').addEventListener('change', () => void act(async () => {
 }));
 el('refresh-deposit').addEventListener('click', () => void act(refresh));
 el('new-receive').addEventListener('click', () => void act(async () => {
-  if (backup && !saved) throw new Error('Save recovery first.');
   record = undefined; backup = undefined; deposit = undefined; saved = false; spent = false; assets = []; unreadable = []; candidates = []; scanBlock = undefined;
   approvedToken = undefined; field('review-standard-token').checked = false;
   el('transaction-status').textContent = '';

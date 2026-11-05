@@ -46,6 +46,10 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
     await page.screenshot({path: '.cache/puddle-protocol-menu-dark.png', fullPage: true, animations: 'disabled'});
     await page.keyboard.press('Escape');
     assert((await page.locator('#route-description').innerText()).includes('ETH and tokens'));
+    // An unfunded address can be discarded without an unnecessary download.
+    await page.locator('#prepare').click(); await page.locator('#receive-details').waitFor({state: 'visible'});
+    await page.locator('#new-receive').click(); await page.locator('#receive-form').waitFor({state: 'visible'});
+    assert.equal(await page.locator('#funding-instructions').isVisible(), false);
     for (const native of [true, false]) {
       if (!native) await page.locator('#new-receive').click();
       await page.locator('#prepare').click();
