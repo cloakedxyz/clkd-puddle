@@ -142,7 +142,6 @@ el('prepare-manual-relay').addEventListener('click', () => void act(async () => 
   const approval: TokenApproval = token === record.asset
     ? {token, codeHash: record.codeHashes.asset, implementation: record.assetImplementation ?? null, standard: true}
     : approvedToken!;
-  if (token === record.asset && funding.balance > BigInt(configuration.maxAmount)) throw new Error('Received ETH amount exceeds this route’s limit. Recover the funds instead.');
   const gasText = field('operator-gas-fee').value.trim();
   const rawUnits = funding.decimals === null || funding.decimals > 36;
   if (rawUnits && !/^[0-9]+$/.test(gasText)) throw new Error('Enter gas reimbursement in whole token base units.');
@@ -191,7 +190,6 @@ el('send-from-wallet').hidden = true; el('wallet-choice').hidden = true;
 el('asset-operator-tools').hidden = false; el('recover-from-wallet').textContent = 'Recover funds';
 el('manual-deposit-note').hidden = configuration.mode === 'local';
 el('route-description').textContent = `ETH and tokens on ${configuration.chainName}.`;
-el('railgun-mode').textContent = configuration.mode === 'local' ? 'Local demo' : 'Private transfers';
 clearQuote(); render();
 setInterval(() => {if (backup && saved && !spent && !busy) void act(refresh);}, 15_000);
 if (configuration.mode === 'local') {
