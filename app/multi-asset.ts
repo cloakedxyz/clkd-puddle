@@ -101,6 +101,7 @@ async function ownerSigner() {
   return wallet.getSigner();
 }
 function showBackup(recipient: string) {
+  (el('receive-info') as HTMLDetailsElement).open = false;
   field('recovery-asset').value = ''; field('operator-gas-fee').value = '0'; approvedToken = undefined; field('review-standard-token').checked = false;
   el('recipient-summary').textContent = recipient;
   el('recovery-summary').textContent = `Recovery: ${backup!.config.recovery}`;
