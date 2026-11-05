@@ -38,6 +38,6 @@ receiving addresses. Read [Security](../SECURITY.md) for privacy and review deta
 ## Build with Puddle
 
 Use the SDK to create addresses, check deposits and prepare recovery transactions
-in your app. Start with [SDK installation](api.md#installation) and the
-[API reference](api.md). [Architecture](architecture.md) covers the contracts and
+in your app. Start with [Integrate Puddle](integrate.md) for a copyable module and
+the [API reference](api.md) for functions and types. [Architecture](architecture.md) covers the contracts and
 [Relay quotes](bridges.md) covers the optional bridge quote helpers.

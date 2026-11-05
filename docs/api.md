@@ -3,6 +3,9 @@
 `@cloakedxyz/puddle@0.1.0-rc.1` provides JavaScript modules for ethers v6, browsers
 and Node 24.12+. This reference covers the SDK’s functions and types.
 
+For the complete wallet integration sequence, see [Integrate Puddle](integrate.md).
+These are SDK functions; there is no hosted Puddle REST service.
+
 ## Installation
 
 Build the package from the repository. It is not published to npm.

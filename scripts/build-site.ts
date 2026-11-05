@@ -9,7 +9,7 @@ import { verifyDeployment } from '../sdk/index.ts';
 import { verifySdkBuild } from '../sdk/verify-build.mjs';
 import { recoveryArtifacts } from './artifacts.ts';
 import { renderApp } from './html.ts';
-import { documentation, renderDocumentation } from './docs.ts';
+import { documentation, renderDocumentation, machineDocumentation } from './docs.ts';
 import { publicSiteConfiguration, readSiteRelease, requirePublicArbitrum, validateSiteRelease } from './site-release.ts';
 import type { SiteRelease } from './site-release.ts';
 import { isDeepStrictEqual } from 'node:util';
@@ -46,6 +46,7 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
     await mkdir(target, {recursive: true});
     await writeFile(join(target, 'index.html'), await renderDocumentation(page));
   }
+  for (const [path, [text]] of await machineDocumentation()) await writeFile(join(output, path.slice(1)), text);
   for (const file of ['style.css', 'docs.css', 'assets/metamask.svg', 'assets/rainbow.svg', 'assets/rabby.svg', 'assets/railgun.svg', ...chainLogoFiles]) {
     await copyFile(join('app', file), join(output, file));
   }
