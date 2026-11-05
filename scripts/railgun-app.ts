@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { join } from 'node:path';
 import { build } from 'esbuild';
-import { JsonRpcProvider, Wallet, parseEther } from 'ethers';
+import { JsonRpcProvider, Wallet, parseEther, ZeroAddress, getAddress } from 'ethers';
 import { validateRailgunSiteConfiguration, siteDeployment } from '../app/configuration.ts';
 import type { RailgunSiteConfiguration } from '../app/configuration.ts';
-import { inspectRecovery, parseRecoveryFile, recoveryRecord } from '../sdk/index.ts';
+import { inspectRecovery, parseRecoveryFile, recoveryRecord, readFundingAsset, quoteFunding } from '../sdk/index.ts';
 import { minimumMatchingAssetOutput, relayFundingRequest, validateRelayFundingQuote } from '../sdk/relay.ts';
 import type { RecoveryFile } from '../sdk/index.ts';
 import { recoveryArtifacts } from './artifacts.ts';
@@ -19,7 +19,7 @@ import { chainLogoFiles } from '../app/networks.ts';
 import { documentation, renderDocumentation, machineDocumentation } from './docs.ts';
 
 export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5177,
-  demo?: { recipient: string; recovery: string; amount?: string; action: (kind: string, file: RecoveryFile, amount: bigint) => Promise<string> },
+  demo?: { recipient: string; recovery: string; amount?: string; action: (kind: string, file: RecoveryFile, amount: bigint, asset?: string) => Promise<string> },
   worker?: RelayWorker) {
   const configuration = validateRailgunSiteConfiguration(input);
   if (configuration.bridgeOrigins?.length && !process.env.RELAY_API_KEY) {
@@ -135,7 +135,7 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
           || typeof data.amount !== 'string' || !/^[1-9][0-9]{0,35}$/.test(data.amount)
           || BigInt(data.amount) > BigInt(configuration.maxAmount)) { response.writeHead(400).end(); return; }
         busy = true;
-        try { result = { transactionHash: await demo.action(path, file, BigInt(data.amount)) }; }
+        try { result = { transactionHash: await demo.action(path, file, BigInt(data.amount), data.asset) }; }
         finally { busy = false; }
       } else { response.writeHead(404).end(); return; }
       response.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(result));
@@ -182,9 +182,18 @@ export async function startRailgunDemo(port = 5177, automatic = false, multiAsse
     }
     const site = await startRailgunSite(configuration, port, {
       recipient: recipient.address, recovery: await env.recovery.getAddress(), amount: automatic || multiAsset ? '0.01' : '100',
-      action: async (kind, file, amount) => {
+      action: async (kind, file, amount, asset) => {
         const record = recoveryRecord(file);
         if (kind === '/api/demo-fund') return (await fund(env, file.depositAddress, amount)).hash;
+        if (file.multiAsset) {
+          const selected = getAddress(asset ?? file.asset);
+          if (selected !== ZeroAddress && selected !== file.asset) throw new Error('The demo operator supports only ETH and its test wrapped token.');
+          const funding = await readFundingAsset(env.provider, record.address, selected);
+          if (funding.balance !== amount) throw new Error('Demo funding changed.');
+          const deposit = await quoteFunding(env.provider, record, funding, {token: file.asset,
+            codeHash: record.codeHashes.asset, implementation: record.assetImplementation ?? null, standard: true});
+          return (await settle(env, deposit)).hash;
+        }
         const block = await env.provider.getBlock('latest'); if (!block) throw new Error('No block');
         const deposit = await env.adapter.quote(env.provider, record, { token: file.asset, amount,
           gasFee: BigInt(configuration.gasFee), deadline: BigInt(block.timestamp + 3600) });

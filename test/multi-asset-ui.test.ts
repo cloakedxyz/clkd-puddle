@@ -92,6 +92,13 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
         assert.equal(await app.env.provider.getBalance(recovery.depositAddress), 0n);
       }
     }
+    // The default local demo also completes without importing any disposable operator key.
+    await page.locator('#new-receive').click(); await page.locator('#prepare').click();
+    await page.locator('#receive-details').waitFor({state: 'visible'});
+    const demoDownload = page.waitForEvent('download'); await page.locator('#save-backup').click(); await demoDownload;
+    await page.locator('#demo-fund').click(); await page.locator('#demo-relay').waitFor({state: 'visible'});
+    await page.locator('#demo-relay').click();
+    await page.waitForFunction(() => document.querySelector('#balance-status')?.textContent?.includes('Pool deposit executed'));
     assert.deepEqual(errors, []);
   } finally {await browser.close(); await app.close();}
 });

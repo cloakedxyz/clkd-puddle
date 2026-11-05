@@ -15,6 +15,9 @@ export function recoveryArtifacts(multiAsset = false): RecoveryArtifacts {
   return { format: 'puddle-kernel-artifacts', version: 1,
     contracts: Object.fromEntries(Object.entries(names).map(([key, name]) => {
       const artifact = contractArtifact(name);
-      return [key, { code: artifact.deployedBytecode.object, references: artifact.deployedBytecode.immutableReferences ?? {} }];
+      // Solidity's reference IDs depend on the compilation unit (for example whether
+      // tests were compiled alongside it). Only offsets matter for runtime matching.
+      const offsets = Object.values(artifact.deployedBytecode.immutableReferences ?? {}).flat().sort((a, b) => a.start - b.start);
+      return [key, { code: artifact.deployedBytecode.object, references: offsets.length ? {'0': offsets} : {} }];
     })) as RecoveryArtifacts['contracts'] };
 }

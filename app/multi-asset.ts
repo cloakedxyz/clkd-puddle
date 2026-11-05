@@ -39,7 +39,9 @@ function render() {
   field('relay-from-wallet').disabled = busy || !deposit || !saved || spent || connected !== backup?.config.relayer;
   field('recover-from-wallet').disabled = busy || !backup || connected !== backup.config.recovery;
   field('demo-fund').disabled = busy || !saved || spent;
-  el('demo-relay').hidden = true;
+  el('demo-relay').hidden = configuration.mode !== 'local' || !selected()
+    || ![ZeroAddress, deployment.asset].includes(selected()!.token);
+  field('demo-relay').disabled = busy || !saved || spent;
 }
 async function act(work: () => Promise<void>) {
   if (busy) return;
@@ -196,6 +198,14 @@ if (configuration.mode === 'local') {
   const demo = await (await fetch('/demo.json')).json(); field('private-recipient').value = demo.recipient; field('recovery-owner').value = demo.recovery;
   // Local faucet funds a known token; arbitrary tokens/ETH can also arrive from a normal wallet.
   el('demo-actions').hidden = false;
+  el('demo-relay').textContent = 'Complete test deposit';
+  el('demo-relay').addEventListener('click', () => void act(async () => {
+    if (!backup || !saved || !selected()) throw new Error('Save recovery and select received funds.');
+    const response = await fetch('/api/demo-relay', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({recovery: backup, amount: String(selected()!.balance), asset: selected()!.token})});
+    if (!response.ok) throw new Error('Local deposit failed.');
+    const result = await response.json(); el('transaction-status').textContent = `Test deposit: ${result.transactionHash}`; await refresh();
+  }));
   el('demo-fund').addEventListener('click', () => void act(async () => {
     if (!backup || !saved) throw new Error('Save recovery first.');
     const response = await fetch('/api/demo-fund', {method: 'POST', headers: {'Content-Type': 'application/json'},

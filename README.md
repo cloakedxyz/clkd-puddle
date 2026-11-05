@@ -27,7 +27,7 @@ npm run dev
 
 Open **http://127.0.0.1:5177**. The demo runs a fresh local chain with real Kernel
 and RAILGUN contracts and disposable wallets. Save recovery, fund the account,
-then complete the deposit with the configured operator wallet.
+then complete the test deposit with the local demo action or configured operator wallet.
 The demo accepts ETH and standard ERC-20s without asking for an amount at address creation. The same interface restores saved recovery files.
 Restarting clears the local chain.
 
