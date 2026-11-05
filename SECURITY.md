@@ -35,6 +35,14 @@ Public recipient/address mappings and recovery files are privacy-sensitive. Keep
 recovery files private and save them before funding. Reused owners link accounts.
 Successfully shielded funds belong to the RAILGUN wallet, outside account recovery.
 
+## SDK input checks
+
+Financial preparation and verification use private copies of their inputs before
+asynchronous chain checks. Recovery transactions use the same validated recovery
+snapshot throughout. Changes to a caller's object cannot change the destination
+or terms after validation starts. Recovery requires complete trusted runtime
+templates supplied independently of the saved file; missing templates are rejected.
+
 ## Token-independent deposits
 
 The multi-asset module wraps native funds only through the pinned wrapped-native

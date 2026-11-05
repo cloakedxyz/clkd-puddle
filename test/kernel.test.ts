@@ -142,6 +142,10 @@ test('deployment pins, recovery file integrity and trusted module artifacts reje
     const bad = {...env.deployment, codeHashes: {...env.deployment.codeHashes, [key]: '0x' + '00'.repeat(32)}};
     await assert.rejects(verifyDeployment(env.provider, bad, recoveryArtifacts()), /code/);
   }
+  await assert.rejects(inspectRecovery(env.provider, file, undefined!), /trusted artifacts/i);
+  const incomplete = recoveryArtifacts();
+  delete (incomplete.contracts as Partial<typeof incomplete.contracts>).factory;
+  await assert.rejects(inspectRecovery(env.provider, file, incomplete), /trusted artifacts/i);
   const artifacts = recoveryArtifacts(); artifacts.contracts.executor.code = '0x00';
   await assert.rejects(inspectRecovery(env.provider, file, artifacts), /runtime|build/);
   assert.throws(() => parseRecoveryFile(JSON.stringify({...file, config: {...file.config, recovery: '0x1111111111111111111111111111111111111111'}})));
@@ -150,6 +154,38 @@ test('deployment pins, recovery file integrity and trusted module artifacts reje
   const decoded = executorABI.decodeFunctionData('deployAndExecute', executorABI.encodeFunctionData('deployAndExecute',
     [initialData(deposit, deposit.config), deposit.salt, deposit.config.recipient, deposit.quote]));
   assert.equal(decoded[2], deposit.config.recipient);
+});
+
+test('recovery and relay use the same input snapshot throughout asynchronous checks', async () => {
+  const recipient = await createRecipient();
+  const deposit = await prepareDeposit(env, recipient.address, 10_000_000n);
+  const file = createRecoveryFile(deposit), owner = file.config.recovery;
+  await fund(env, deposit.address, 123n);
+  await mined(env.recovery.sendTransaction(await recoveryTransaction(env.provider, file, recoveryArtifacts(), owner, file.asset, 'deploy')));
+  const other = await env.attacker.getAddress();
+  const getNetwork = env.provider.getNetwork.bind(env.provider);
+  env.provider.getNetwork = async () => {file.depositAddress = other; return getNetwork();};
+  try {
+    const transaction = await recoveryTransaction(env.provider, file, recoveryArtifacts(), owner);
+    assert.equal(transaction.to, deposit.address);
+    await mined(env.recovery.sendTransaction(transaction));
+  } finally {env.provider.getNetwork = getNetwork;}
+  assert.equal(await env.token.getFunction('balanceOf')(deposit.address), 0n);
+  assert.equal(await env.token.getFunction('balanceOf')(owner), 123n);
+
+  const next = await prepareDeposit(env, recipient.address, 10_000_000n);
+  await fund(env, next.address, next.quote.amount);
+  const expectedExecutor = next.executor;
+  const getBlock = env.provider.getBlock.bind(env.provider);
+  env.provider.getBlock = async (...args) => {
+    const block = await getBlock(...args); next.executor = other; return block;
+  };
+  try {
+    const transaction = await relayDeposit(env.adapter, next, env.relayer);
+    assert.equal(getAddress(transaction.to!), expectedExecutor);
+    const note = await decryptDeposit(env, recipient, await mined(Promise.resolve(transaction)));
+    assert(note.amount > 0n);
+  } finally {env.provider.getBlock = getBlock;}
 });
 
 test('a contract recovery wallet controls Kernel through direct calls', async () => {

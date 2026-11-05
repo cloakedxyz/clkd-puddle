@@ -15,6 +15,7 @@ export interface FundingAsset {
 /** Prepare and back up a token-independent address, without an amount quote. */
 export async function prepareFlexibleReceive(provider: Provider, deployment: Deployment,
   input: RailgunInput, artifacts: RecoveryArtifacts) {
+  deployment = structuredClone(deployment); input = structuredClone(input); artifacts = structuredClone(artifacts);
   requireThat(deployment.multiAsset === true, 'A multi-asset executor is required.');
   await verifyDeployment(provider, deployment, artifacts);
   const record = await createRailgunAdapter(deployment).prepare(provider, input);
@@ -47,6 +48,7 @@ export async function readFundingAsset(provider: Provider, address: string, toke
 /** Scan Transfer logs in bounded pages. A fabricated log never substitutes for balanceOf. */
 export async function discoverFunding(provider: Provider, record: DepositRecord,
   options: {fromBlock?: number; toBlock?: number; tokens?: string[]} = {}) {
+  record = structuredClone(record); options = structuredClone(options);
   const fromBlock = options.fromBlock ?? record.fundingBlock;
   const toBlock = options.toBlock ?? await provider.getBlockNumber();
   requireThat(Number.isSafeInteger(fromBlock) && fromBlock! >= 0 && Number.isSafeInteger(toBlock)
@@ -74,6 +76,7 @@ export async function discoverFunding(provider: Provider, record: DepositRecord,
 /** Approval must come from the wallet/operator's reviewed token policy, not discovery metadata. */
 export async function quoteFunding(provider: Provider, record: DepositRecord, funding: FundingAsset,
   approval: TokenApproval, gasFee = 0n) {
+  record = structuredClone(record); funding = structuredClone(funding); approval = structuredClone(approval);
   requireThat(record.multiAsset === true && funding.balance > 0n, 'No multi-asset funding.');
   const native = getAddress(funding.token) === ZeroAddress;
   const token = native ? record.asset : getAddress(funding.token);

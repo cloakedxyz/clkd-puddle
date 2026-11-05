@@ -124,3 +124,22 @@ operator review; rebasing, lottery and taxed tokens are excluded. There is no ge
 token-to-gas pricing service: the manual operator agrees to the quoted reimbursement.
 The existing automatic WETH worker rejects multi-asset mode. The earlier version-1 recovery format remains usable with the compiled compatibility
 template. The automatic worker and public bridge routes remain disabled for this mode.
+
+## SDK security hardening
+
+Recovery and deposit operations now capture their input data before asynchronous
+checks. Recovery uses one validated snapshot for checks and transaction preparation.
+Regression coverage changes the caller's recovery address and executor destination
+during real local chain reads and verifies that only the original checked transaction
+is used. A separate regression rejects missing or incomplete trusted recovery artifacts.
+Neither change alters the deployed contracts or requires new live transactions.
+
+Compatible development dependency patches update body-parser, follow-redirects and qs.
+The SDK runtime dependency audit reports zero known advisories; CI now requires
+that check, and dependency update checks run weekly. The development-only
+protocol engine and its older dependency tree still report 49 affected packages
+(including 11 high and one critical); they are excluded from the SDK package and
+static website. This work does not constitute an independent security audit.
+
+The live ETH and WETH test notes are now both **SYNCED** in Railway. No private
+spending transaction was sent.

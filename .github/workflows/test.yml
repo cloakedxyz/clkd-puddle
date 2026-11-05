@@ -33,6 +33,8 @@ jobs:
           version: v1.7.1
           cache: false
       - run: npm ci --ignore-scripts
+      - name: Check shipped SDK dependencies for known vulnerabilities
+        run: npm audit --prefix sdk --omit=dev --audit-level=low
       - run: npm run setup
       - run: npx playwright install --with-deps chromium
       - name: Kernel, SDK, browser and site checks
