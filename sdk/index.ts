@@ -7,3 +7,7 @@ export { inspectDeposit, relayDeposit, validateDeposit, verifyDeployment, verify
 export type { Deployment, DepositRecord, DepositExecution, DepositQuote, DepositTerms, DepositConfig, RecoveryArtifacts } from './kernel.ts';
 export { createRecoveryFile, parseRecoveryFile, inspectRecovery, recoveryTransaction, recoveryRecord } from './recovery.ts';
 export type { RecoveryFile } from './recovery.ts';
+
+export { prepareFlexibleReceive, discoverFunding, readFundingAsset, quoteFunding } from './funding.ts';
+export type { FundingAsset } from './funding.ts';
+export type { TokenApproval } from './kernel.ts';

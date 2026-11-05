@@ -3,6 +3,7 @@ import { AbiCoder, Contract, Interface, ZeroAddress, concat, getAddress, getCrea
 import type { Provider, Signer, TransactionResponse } from 'ethers';
 
 export interface Deployment {
+  multiAsset?: boolean;
   chainId: bigint;
   factory: string;
   implementation: string;
@@ -17,9 +18,10 @@ export interface Deployment {
 }
 export interface DepositTerms { recovery: string; relayer: string; feeRecipient: string }
 export interface DepositConfig extends DepositTerms { recipient: string }
-export interface DepositQuote { token: string; amount: bigint; gasFee: bigint; deadline: bigint }
+export interface TokenApproval { token: string; codeHash: string; implementation: Deployment['poolImplementation']; standard: true }
+export interface DepositQuote { token: string; amount: bigint; gasFee: bigint; deadline: bigint; native?: boolean; approval?: TokenApproval }
 export interface DepositRecord extends Deployment {
-  protocol: 'railgun'; address: string; salt: string; config: DepositConfig;
+  protocol: 'railgun'; address: string; salt: string; config: DepositConfig; fundingBlock?: number;
 }
 export interface DepositExecution extends DepositRecord {
   quote: DepositQuote;
@@ -33,6 +35,7 @@ export interface RecoveryArtifacts {
 
 export const abi = AbiCoder.defaultAbiCoder();
 export const termsType = 'tuple(address relayer,address feeRecipient,bytes32 recipientHash)';
+export const assetQuoteType = 'tuple(address token,bool native,uint120 amount,uint120 gasFee,uint48 deadline)';
 export const quoteType = 'tuple(uint120 amount,uint120 gasFee,uint48 deadline)';
 export const batchMode = `0x01${'00'.repeat(31)}`;
 export const executionsType = 'tuple(address target,uint256 value,bytes callData)[]';
@@ -48,6 +51,9 @@ export const factoryABI = new Interface([
   'function getAddress(bytes,bytes32) view returns(address)', 'function implementation() view returns(address)',
 ]);
 export const executorABI = new Interface([
+  `function deployAndExecuteAsset(bytes,bytes32,bytes,${assetQuoteType}) returns(address)`,
+  `function executeAsset(address,bytes,${assetQuoteType})`,
+  'function multiAsset() pure returns(bool)', 'function maxTokenGasFeeBps() view returns(uint256)',
   `function deployAndExecute(bytes,bytes32,bytes,${quoteType}) returns(address)`,
   `function execute(address,bytes,${quoteType})`,
   'function terms(address) view returns(address relayer,address feeRecipient,bytes32 recipientHash)',
@@ -127,6 +133,8 @@ export async function verifyDeployment(provider: Provider, deployment: Deploymen
     requireThat(same(await module.getFunction(name)(), deployment[name]), `Wrong executor ${name}.`);
   }
   requireThat(await module.getFunction('maxGasFee')() === deployment.maxGasFee, 'Wrong executor gas cap.');
+  if (deployment.multiAsset) requireThat(await module.getFunction('multiAsset')() === true
+    && await module.getFunction('maxTokenGasFeeBps')() === 500n, 'Wrong multi-asset policy.');
 }
 export async function verifyAccount(provider: Provider, record: DepositRecord, checkExecutor = true) {
   requireThat(record.address === predictAddress(record, record.config, record.salt), 'Account configuration/address mismatch.');
@@ -156,6 +164,7 @@ export function createRecord(deployment: Deployment, config: DepositConfig, salt
 }
 export async function validateDeposit(adapter: {deployment: Readonly<Deployment>}, record: DepositRecord, provider: Provider) {
   const expected = adapter.deployment;
+  requireThat(!!record.multiAsset === !!expected.multiAsset, 'Wrong asset mode.');
   requireThat(record.protocol === 'railgun' && record.chainId === expected.chainId && record.maxGasFee === expected.maxGasFee,
     'Wrong deposit route.');
   requireThat(expected.poolImplementation ? record.poolImplementation
@@ -174,15 +183,27 @@ export async function validateDeposit(adapter: {deployment: Readonly<Deployment>
 }
 export async function inspectDeposit(adapter: {deployment: Readonly<Deployment>}, deposit: DepositExecution, provider: Provider) {
   await validateDeposit(adapter, deposit, provider);
-  const balance: bigint = await new Contract(deposit.asset, tokenABI, provider).getFunction('balanceOf')(deposit.address);
+  const balance: bigint = deposit.quote.native ? await provider.getBalance(deposit.address)
+    : await new Contract(deposit.quote.token, tokenABI, provider).getFunction('balanceOf')(deposit.address);
   const spent: boolean = await new Contract(deposit.executor, executorABI, provider).getFunction('spent')(deposit.address);
   return { deployed: await provider.getCode(deposit.address) !== '0x', spent, balance,
     ready: !spent && balance >= deposit.quote.amount };
 }
 export async function validateQuote(provider: Provider, deployment: Deployment, quote: DepositQuote) {
-  requireThat(same(quote.token, deployment.asset) && quote.amount > 0n && quote.amount < 1n << 120n
-    && quote.gasFee >= 0n && quote.gasFee <= deployment.maxGasFee && quote.gasFee + quote.amount / 1000n < quote.amount
+  requireThat((deployment.multiAsset || same(quote.token, deployment.asset)) && quote.amount > 0n && quote.amount < 1n << 120n
+    && quote.gasFee >= 0n && (deployment.multiAsset && !same(quote.token, deployment.asset) ? quote.gasFee <= quote.amount / 20n : quote.gasFee <= deployment.maxGasFee) && quote.gasFee + quote.amount / 1000n < quote.amount
     && quote.deadline > 0n && quote.deadline < 1n << 48n, 'Invalid amount, asset, fee or expiry.');
+  if (deployment.multiAsset) {
+    requireThat(!quote.native || same(quote.token, deployment.asset), 'Native deposits require the pinned wrapped native token.');
+    requireThat(quote.gasFee <= quote.amount / 20n, 'Token gas reimbursement exceeds 5%.');
+    const approval = quote.approval;
+    requireThat(approval?.standard === true && same(approval.token, quote.token), 'A reviewed standard-token approval is required.');
+    requireThat(/^0x[\da-f]{64}$/.test(approval.codeHash) && await provider.getCode(quote.token) !== '0x'
+      && keccak256(await provider.getCode(quote.token)) === approval.codeHash, 'Token code changed.');
+    const implementation = getAddress(`0x${(await provider.getStorage(quote.token, implementationSlot)).slice(-40)}`);
+    requireThat(approval.implementation ? same(implementation, approval.implementation.address)
+      && keccak256(await provider.getCode(implementation)) === approval.implementation.codeHash : implementation === ZeroAddress, 'Token implementation changed.');
+  } else requireThat(!quote.native && !quote.approval, 'This executor accepts its configured ERC-20 only.');
   const block = await provider.getBlock('latest');
   requireThat(block && BigInt(block.timestamp) <= quote.deadline, 'Deposit quote expired.');
 }
@@ -192,8 +213,8 @@ export async function relayDeposit(adapter: {deployment: Readonly<Deployment>}, 
   requireThat(!state.spent && state.ready, 'Account already used or insufficiently funded.');
   await validateQuote(signer.provider, deposit, deposit.quote);
   return signer.sendTransaction({ to: deposit.executor, chainId: deposit.chainId, value: 0n,
-    data: executorABI.encodeFunctionData('deployAndExecute', [initialData(deposit, deposit.config), deposit.salt,
-      deposit.config.recipient, deposit.quote]) });
+    data: executorABI.encodeFunctionData(deposit.multiAsset ? 'deployAndExecuteAsset' : 'deployAndExecute', [initialData(deposit, deposit.config), deposit.salt,
+      deposit.config.recipient, deposit.multiAsset ? {...deposit.quote, native: !!deposit.quote.native} : deposit.quote]) });
 }
 export async function mined(transaction: Promise<TransactionResponse>) {
   const receipt = await (await transaction).wait();

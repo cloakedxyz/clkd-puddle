@@ -13,8 +13,10 @@ export function createRailgunAdapter(configuration: Deployment) {
     deployment,
     async prepare(provider: Provider, input: RailgunInput): Promise<DepositRecord> {
       await verifyDeployment(provider, deployment);
-      return createRecord(deployment, { recipient: await prepareRailgunRecipient(input.recipient, deployment.chainId),
+      const record = createRecord(deployment, { recipient: await prepareRailgunRecipient(input.recipient, deployment.chainId),
         recovery: input.recovery, relayer: input.relayer, feeRecipient: input.feeRecipient });
+      if (deployment.multiAsset) record.fundingBlock = await provider.getBlockNumber();
+      return record;
     },
     async quote(provider: Provider, record: DepositRecord, quote: DepositQuote): Promise<DepositExecution> {
       await validateDeposit(adapter, record, provider);

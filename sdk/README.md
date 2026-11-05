@@ -91,3 +91,13 @@ authorization; account recovery controls funds that have reached the Kernel addr
 Original code is MIT; dependencies and built upstream contracts retain their own
 licenses. See NOTICE and SECURITY.md. `npm run test:sdk-package` checks an actual
 isolated installation, types, example and browser bundle from the repository.
+
+## Token-independent addresses
+
+`prepareFlexibleReceive` creates an address before a token or amount is chosen.
+`discoverFunding` reads ETH and ERC-20 balances; `quoteFunding` requires a reviewed
+standard-token approval before manual completion. Use a deployed
+`MultiAssetRailgunExecutor`, `multiAsset: true` and the
+`@cloakedxyz/puddle/multi-asset-contracts` artifact. The current website's executor
+remains WETH-only. See the [integration guide](../docs/integrate.md#receive-without-choosing-a-token-first)
+for the copyable module, token exclusions, fee caps and recovery behavior.

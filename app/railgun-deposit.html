@@ -64,12 +64,24 @@
       <button class="primary" type="button" id="demo-relay">Relay test deposit</button>
     </div>
     <button class="secondary" type="button" id="refresh-deposit">Check deposit</button>
+    <section id="detected-funds" hidden aria-label="Received assets">
+      <label class="field-label" for="funded-asset">Received funds</label>
+      <select class="text-input" id="funded-asset"></select>
+      <p class="form-hint" id="asset-review-status"></p>
+    </section>
     <details id="wallet-tools"><summary>Wallet actions</summary>
       <p class="button-note">Send with your wallet, relay with the configured operator wallet, or recover with the recovery wallet. Your keys stay in your wallet.</p>
       <label for="wallet-choice" class="field-label">Wallet</label><select id="wallet-choice"><option value="">Browser wallet</option></select>
       <button class="secondary" type="button" id="connect-wallet">Connect wallet</button>
       <p id="connected-wallet" class="button-note"></p>
       <button class="primary" type="button" id="send-from-wallet" disabled>Send tokens</button>
+      <div id="asset-operator-tools" hidden>
+        <label class="field-label" for="operator-gas-fee">Gas reimbursement in the received token</label>
+        <input class="text-input" id="operator-gas-fee" value="0" inputmode="decimal">
+        <label class="form-hint"><input type="checkbox" id="review-standard-token"> I reviewed this token: no rebasing, transfer tax, lottery or other changing-balance behavior.</label>
+        <label class="field-label" for="recovery-asset">Recover asset (0x token address, or ETH)</label>
+        <input class="text-input" id="recovery-asset" placeholder="ETH or 0x…">
+      </div>
       <button class="secondary" type="button" id="prepare-manual-relay" hidden>Prepare manual deposit</button>
       <button class="primary" type="button" id="relay-from-wallet" disabled>Relay deposit</button>
       <button class="secondary" type="button" id="recover-from-wallet" disabled>Recover remaining tokens</button>

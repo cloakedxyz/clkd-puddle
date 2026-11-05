@@ -3,8 +3,10 @@
 **ERC-20 transfer → ZeroDev Kernel account → RAILGUN.**
 
 Puddle uses unmodified Kernel v3.3 accounts, factory and ECDSA owner validator, pinned
-at `cd697c7e21715d015e0643af22310a99aa17433b`. Its only settlement contract is
-`contracts/RailgunExecutor.sol`, a restricted execution module. Puddle has no custom
+at `cd697c7e21715d015e0643af22310a99aa17433b`. Its settlement rules live in
+`contracts/RailgunExecutor.sol`, a restricted execution module.
+`MultiAssetRailgunExecutor` extends those rules to token selection after funding and
+atomic wrapping of ETH. The current public route still uses the first executor. Puddle has no custom
 receiving account, factory, account upgrade authority or generic relayer batch API.
 
 ## Receiving account

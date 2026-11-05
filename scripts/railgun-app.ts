@@ -37,9 +37,9 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
   if ((await provider.getNetwork()).chainId !== BigInt(configuration.chainId)) {
     provider.destroy(); throw new Error('RPC chain does not match the site configuration.');
   }
-  const bundle = await build({ entryPoints: ['app/railgun.ts', 'app/theme.ts', 'app/site.ts'],
+  const bundle = await build({ entryPoints: {railgun: configuration.multiAsset ? 'app/multi-asset.ts' : 'app/railgun.ts', theme: 'app/theme.ts', site: 'app/site.ts'},
     outdir: '.cache/railgun-ui', bundle: true, format: 'esm', platform: 'browser', target: 'es2022', write: false, minify: true });
-  const trustedArtifacts = recoveryArtifacts();
+  const trustedArtifacts = recoveryArtifacts(!!configuration.multiAsset);
   const files = new Map<string, [string | Uint8Array, string]>([
     ['/', [await renderApp('railgun'), 'text/html']],
     ['/configuration.json', [JSON.stringify({...configuration, automaticRelay: !!worker,
@@ -154,24 +154,24 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
   }) };
 }
 
-export async function startRailgunDemo(port = 5177, automatic = false) {
+export async function startRailgunDemo(port = 5177, automatic = false, multiAsset = false) {
   const { createEnvironment, createRecipient, fund, settle } = await import('../test/helpers.ts');
-  const env = await createEnvironment(undefined, undefined, automatic);
+  const env = await createEnvironment(undefined, undefined, automatic || multiAsset, multiAsset);
   let worker: RelayWorker | undefined; let directory: string | undefined;
   try {
     const recipient = await createRecipient();
     const operator = automatic ? Wallet.createRandom().connect(env.provider) : env.relayer;
     if (automatic) await (await env.deployer.sendTransaction({to: await operator.getAddress(), value: parseEther('0.1')})).wait();
     const configuration: RailgunSiteConfiguration = {
-      chainId: '31337', chainName: 'Local test chain', rpcUrl: env.provider._getConnection().url,
+      ...(multiAsset ? {multiAsset: true} : {}), chainId: '31337', chainName: 'Local test chain', rpcUrl: env.provider._getConnection().url,
       factory: env.deployment.factory, implementation: env.deployment.implementation, validator: env.deployment.validator,
       executor: env.deployment.executor, maxGasFee: String(env.deployment.maxGasFee), codeHashes: env.deployment.codeHashes,
       pool: await env.pool.getAddress(), poolImplementation: env.deployment.poolImplementation,
       assetImplementation: env.deployment.assetImplementation, relayer: await operator.getAddress(),
       feeRecipient: await env.feeCollector.getAddress(), token: await env.token.getAddress(),
-      symbol: automatic ? 'test WETH' : 'test USDC', decimals: automatic ? 18 : 6,
-      gasFee: automatic ? String(parseEther('0.0005')) : '200000',
-      maxAmount: automatic ? String(parseEther('0.1')) : '1000000000000', mode: 'local',
+      symbol: automatic || multiAsset ? 'test WETH' : 'test USDC', decimals: automatic || multiAsset ? 18 : 6,
+      gasFee: multiAsset ? '0' : automatic ? String(parseEther('0.0005')) : '200000',
+      maxAmount: automatic || multiAsset ? String(parseEther('0.1')) : '1000000000000', mode: 'local',
     };
     if (automatic) {
       directory = await mkdtemp('.cache/relay-demo-');
@@ -181,7 +181,7 @@ export async function startRailgunDemo(port = 5177, automatic = false) {
       }, join(directory, 'queue'));
     }
     const site = await startRailgunSite(configuration, port, {
-      recipient: recipient.address, recovery: await env.recovery.getAddress(), amount: automatic ? '0.01' : '100',
+      recipient: recipient.address, recovery: await env.recovery.getAddress(), amount: automatic || multiAsset ? '0.01' : '100',
       action: async (kind, file, amount) => {
         const record = recoveryRecord(file);
         if (kind === '/api/demo-fund') return (await fund(env, file.depositAddress, amount)).hash;
@@ -199,7 +199,7 @@ export async function startRailgunDemo(port = 5177, automatic = false) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const path = process.argv[2];
-  const site = !path || ['--demo', '--demo-auto'].includes(path) ? await startRailgunDemo(5177, path === '--demo-auto')
+  const site = !path || ['--demo', '--demo-auto'].includes(path) ? await startRailgunDemo(5177, path === '--demo-auto', path !== '--demo-auto')
     : await startRailgunSite(JSON.parse(await readFile(path, 'utf8')));
   console.log(`${brand.displayName} RAILGUN: ${site.url}`);
   const stop = () => { void site.close().then(() => process.exit(0)); };

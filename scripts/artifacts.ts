@@ -10,8 +10,8 @@ export function contractArtifact(name: string) {
     deployedBytecode: { object: string; immutableReferences?: Record<string, {start: number; length: number}[]> };
   };
 }
-export function recoveryArtifacts(): RecoveryArtifacts {
-  const names = { factory: 'KernelFactory', implementation: 'Kernel', validator: 'ECDSAValidator', executor: 'RailgunExecutor' };
+export function recoveryArtifacts(multiAsset = false): RecoveryArtifacts {
+  const names = { factory: 'KernelFactory', implementation: 'Kernel', validator: 'ECDSAValidator', executor: multiAsset ? 'MultiAssetRailgunExecutor' : 'RailgunExecutor' };
   return { format: 'puddle-kernel-artifacts', version: 1,
     contracts: Object.fromEntries(Object.entries(names).map(([key, name]) => {
       const artifact = contractArtifact(name);

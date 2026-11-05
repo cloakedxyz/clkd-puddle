@@ -111,6 +111,7 @@ contract RailgunExecutor is IExecutor, ReentrancyGuard {
 
     function deployAndExecute(bytes calldata initData, bytes32 salt, bytes calldata recipient, Quote calldata quote)
         external
+        virtual
         nonReentrant
         returns (address account)
     {
@@ -118,7 +119,7 @@ contract RailgunExecutor is IExecutor, ReentrancyGuard {
         _execute(account, recipient, quote);
     }
 
-    function execute(address account, bytes calldata recipient, Quote calldata quote) external nonReentrant {
+    function execute(address account, bytes calldata recipient, Quote calldata quote) external virtual nonReentrant {
         _execute(account, recipient, quote);
     }
 

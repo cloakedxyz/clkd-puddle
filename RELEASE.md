@@ -100,3 +100,23 @@ of Puddle. See [bridge scope](docs/bridges.md).
    and verify a fresh registry installation. No automatic publishing is configured.
 
 See the [release checklist](docs/releasing.md).
+
+## Token-independent receiving implementation
+
+The repository adds `MultiAssetRailgunExecutor`, extending the same restricted
+Kernel module to choose a token after funding. Native ETH is wrapped atomically;
+other standard ERC-20s use the same fixed encrypted recipient and recovery owner.
+The public website remains on its deployed WETH-only executor until the new module
+is deployed and its route is reviewed.
+
+Local protocol and browser checks cover ETH, 6- and 18-decimal tokens, tokens with no
+return value, taxed/blocked token rollback, proxy implementation changes, one-time
+settlement and independent recovery of other or late assets. New Solidity fuzz
+checks cover amount/fee bounds, native wrapping and failed token operations. The
+copyable token-independent integration module is checked against the installed SDK.
+
+Token discovery does not establish safe token behavior. Unfamiliar tokens require
+operator review; rebasing, lottery and taxed tokens are excluded. There is no generic
+token-to-gas pricing service: the manual operator agrees to the quoted reimbursement.
+The existing automatic WETH worker rejects multi-asset mode. A new deployment and a
+bounded live rehearsal are still required before changing the public receiving route.

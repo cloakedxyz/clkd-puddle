@@ -27,6 +27,7 @@
       "types": "./dist/sdk/index.d.ts",
       "import": "./dist/sdk/index.js"
     },
+    "./multi-asset-contracts": "./dist/multi-asset-contracts.json",
     "./contracts": "./dist/contracts.json",
     "./relay": {
       "types": "./dist/sdk/relay.d.ts",

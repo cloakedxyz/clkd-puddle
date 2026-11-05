@@ -35,6 +35,25 @@ Public recipient/address mappings and recovery files are privacy-sensitive. Keep
 recovery files private and save them before funding. Reused owners link accounts.
 Successfully shielded funds belong to the RAILGUN wallet, outside account recovery.
 
+## Token-independent deposits
+
+The multi-asset module wraps native funds only through the pinned wrapped-native
+contract. Other calls remain limited to token approvals, one pool shield and the fixed
+fee recipient. Exact account, fee and pool balance changes and zero residual allowance
+are required. The address still settles once; unrelated and late assets remain owner-recoverable.
+
+Token discovery is not a safety assessment. The wallet/operator must approve standard
+behavior and exclude rebasing, lottery, transfer-tax and other changing-balance tokens.
+Code and EIP-1967 implementation observations detect covered changes, but cannot prove
+token economics or detect every issuer upgrade pattern. The manual operator reviews
+unfamiliar tokens. The general pricing/hosted worker service is not implemented.
+
+Other-token gas reimbursement is capped at 5% in token units. ETH/WETH additionally
+retain the configured absolute wrapped-native ceiling. The multi-asset module
+rejects the inherited WETH execution entry points so they cannot bypass the percentage cap. Failed
+wrapping or settlement reverts atomically. Current live WETH files use version 1;
+flexible files use version 2 and save a starting block for transfer discovery.
+
 ## Dependencies and release checks
 
 Install lockfiles with `--ignore-scripts`. Use normal `npm pack` so its build guard

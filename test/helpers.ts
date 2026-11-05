@@ -54,7 +54,8 @@ export function compile() {
   return output.contracts;
 }
 
-export async function createEnvironment(contracts = compile(), fork?: ForkConfig, wrappedNative = false) {
+export async function createEnvironment(contracts = compile(), fork?: ForkConfig, wrappedNative = false, multiAsset = false) {
+  if (multiAsset) wrappedNative = true;
   const chain = await startChain(fork);
   try {
     const {provider} = chain;
@@ -93,7 +94,7 @@ export async function createEnvironment(contracts = compile(), fork?: ForkConfig
       : await deploy('KernelFactory', [await implementation.getAddress()]);
     const validator = await deploy('ECDSAValidator');
     const maxGasFee = fork?.maxGasFee ?? (wrappedNative ? 5_000_000_000_000_000n : 2_000_000n);
-    const executor = await deploy('RailgunExecutor', [await factory.getAddress(), await pool.getAddress(), await token.getAddress(), maxGasFee]);
+    const executor = await deploy(multiAsset ? 'MultiAssetRailgunExecutor' : 'RailgunExecutor', [await factory.getAddress(), await pool.getAddress(), await token.getAddress(), maxGasFee]);
     const addresses = {factory: await factory.getAddress(), implementation: await implementation.getAddress(),
       validator: await validator.getAddress(), executor: await executor.getAddress(), pool: await pool.getAddress(), asset: await token.getAddress()};
     const codeHashes = Object.fromEntries(await Promise.all(Object.entries(addresses).map(async ([name, address]) =>
@@ -104,7 +105,7 @@ export async function createEnvironment(contracts = compile(), fork?: ForkConfig
     const assetImplementationAddress = getAddress(`0x${(await provider.getStorage(addresses.asset, implementationSlot)).slice(-40)}`);
     const assetImplementation = assetImplementationAddress === ZeroAddress ? null
       : {address: assetImplementationAddress, codeHash: keccak256(await provider.getCode(assetImplementationAddress))};
-    const deployment: Deployment = {...addresses, chainId: (await provider.getNetwork()).chainId,
+    const deployment: Deployment = {...addresses, ...(multiAsset ? {multiAsset: true} : {}), chainId: (await provider.getNetwork()).chainId,
       poolImplementation, assetImplementation, maxGasFee, codeHashes};
     const adapter = createRailgunAdapter(deployment);
     return {...chain, contracts, fork, wrappedNative, pool, token, factory, implementation, validator, executor, deployment, adapter,
