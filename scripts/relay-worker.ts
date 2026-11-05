@@ -28,6 +28,7 @@ const requireThat = (condition: unknown, message: string) => { if (!condition) t
 export async function openRelayWorker(inputDeployment: Deployment, inputArtifacts: RecoveryArtifacts,
   signer: Signer, inputPolicy: RelayPolicy, directory: string) {
   if (!(signer.provider instanceof JsonRpcProvider)) throw new Error('Connect the operator signer to a JSON-RPC provider.');
+  requireThat(!inputDeployment.multiAsset, 'Multi-asset receiving requires manual operator completion.');
   const provider = signer.provider;
   const route = createRailgunAdapter(inputDeployment); const deployment = route.deployment;
   const policy = Object.freeze({...inputPolicy, feeRecipient: getAddress(inputPolicy.feeRecipient)});

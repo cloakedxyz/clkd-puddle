@@ -12,10 +12,11 @@ Read `README.md`, `docs/architecture.md`, then `SECURITY.md`.
 
 ## Source map
 
-- `contracts/RailgunExecutor.sol`: the only Puddle settlement contract.
+- `contracts/RailgunExecutor.sol`: the live WETH settlement rules.
+- `contracts/MultiAssetRailgunExecutor.sol`: adds token-independent deposits and native wrapping.
 - `contracts/KernelImports.sol`: imports unmodified upstream Kernel, factory and validator.
 - `sdk/`: browser/Node preparation, account checks, quotes and owner recovery.
-- `app/`: the single receiving/recovery interface.
+- `app/`: receiving/recovery interfaces selected by the reviewed route’s asset mode.
 - `docs/integrate.md`: wallet/agent integration recipe, checked against the packed SDK.
 - `deployments/arbitrum.json`: reviewed public route pins and runtime templates for the manual website preview; no personal accounts or recipient data.
 - `scripts/railgun-app.ts`: localhost demo/pilot server; no production keys.

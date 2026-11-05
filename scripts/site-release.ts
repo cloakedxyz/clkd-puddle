@@ -19,7 +19,7 @@ export interface SiteRelease {
 }
 const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
 const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
-const critical = ['contracts/RailgunExecutor.sol', 'contracts/KernelImports.sol', 'sdk/index.ts', 'sdk/kernel.ts',
+const critical = ['contracts/MultiAssetRailgunExecutor.sol', 'sdk/funding.ts', 'contracts/RailgunExecutor.sol', 'contracts/KernelImports.sol', 'sdk/index.ts', 'sdk/kernel.ts',
   'sdk/receive.ts', 'sdk/recovery.ts', 'sdk/recipient.ts', 'scripts/build-sdk.ts', 'scripts/artifacts.ts',
   'scripts/setup.ts', 'foundry.toml', 'package.json', 'package-lock.json', 'sdk/package.json'];
 
@@ -32,7 +32,7 @@ export function publicSiteConfiguration(input: RailgunSiteConfiguration): Railgu
   const minimum = BigInt(value.minAmount ?? '1') > feeFloor ? BigInt(value.minAmount!) : feeFloor;
   check(gasFee <= BigInt(value.maxGasFee) && minimum <= BigInt(value.maxAmount), 'Public pilot amount/fee limits cannot produce a valid deposit.');
   return JSON.parse(JSON.stringify({
-    chainId: value.chainId, chainName: value.chainName, rpcUrl: value.rpcUrl, rpcTransport: 'direct',
+    ...(value.multiAsset ? {multiAsset: true} : {}), chainId: value.chainId, chainName: value.chainName, rpcUrl: value.rpcUrl, rpcTransport: 'direct',
     factory: value.factory, implementation: value.implementation, validator: value.validator,
     executor: value.executor, pool: value.pool, token: value.token, codeHashes: {...value.codeHashes},
     poolImplementation: value.poolImplementation ? {address: value.poolImplementation.address, codeHash: value.poolImplementation.codeHash} : null,
@@ -85,7 +85,7 @@ export async function validateSiteRelease(input: SiteRelease, compareCompiled = 
   if (compareCompiled) {
     await verifySdkBuild(); const bytes = await readFile('sdk/dist/build.json');
     check(buildHash(bytes) === input.sdkBuildHash && isDeepStrictEqual(publicInputs(JSON.parse(bytes.toString())), input.sourceHashes)
-      && isDeepStrictEqual(recoveryArtifacts(), artifacts), 'Site release does not match the independently compiled SDK artifacts.');
+      && isDeepStrictEqual(recoveryArtifacts(!!input.configuration.multiAsset), artifacts), 'Site release does not match the independently compiled SDK artifacts.');
   }
   return input;
 }
@@ -93,7 +93,7 @@ export async function validateSiteRelease(input: SiteRelease, compareCompiled = 
 /** Read-only chain preflight; write no personal profile, account salt or recipient. */
 export async function createSiteRelease(input: RailgunSiteConfiguration): Promise<SiteRelease> {
   await verifySdkBuild();
-  const configuration = publicSiteConfiguration(input), artifacts = recoveryArtifacts();
+  const configuration = publicSiteConfiguration(input), artifacts = recoveryArtifacts(!!input.multiAsset);
   const provider = new JsonRpcProvider(configuration.rpcUrl, undefined, {batchMaxCount: 1, cacheTimeout: -1});
   try { await verifyDeployment(provider, siteDeployment(configuration), artifacts); } finally { provider.destroy(); }
   const bytes = await readFile('sdk/dist/build.json');

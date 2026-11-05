@@ -9,10 +9,10 @@ import { buildHash } from '../sdk/verify-build.mjs';
 
 const sources = ['package.json', 'package-lock.json', 'tsconfig.json', 'LICENSE',
   'sdk/package.json', 'sdk/package-lock.json', 'sdk/index.ts', 'sdk/kernel.ts', 'sdk/receive.ts',
-  'sdk/recovery.ts', 'sdk/recipient.ts', 'sdk/relay.ts', 'sdk/poseidon-provenance.txt',
+  'sdk/funding.ts', 'sdk/recovery.ts', 'sdk/recipient.ts', 'sdk/relay.ts', 'sdk/poseidon-provenance.txt',
   'sdk/tsconfig.json', 'sdk/verify-build.mjs', 'sdk/examples/receive.mjs', 'sdk/README.md',
   'sdk/SECURITY.md', 'sdk/NOTICE', 'scripts/build-sdk.ts', 'scripts/artifacts.ts',
-  'scripts/setup.ts', 'foundry.toml', 'contracts/KernelImports.sol', 'contracts/RailgunExecutor.sol'];
+  'scripts/setup.ts', 'foundry.toml', 'contracts/KernelImports.sol', 'contracts/RailgunExecutor.sol', 'contracts/MultiAssetRailgunExecutor.sol'];
 const hashes = async (files: string[], prefix = '') => Object.fromEntries(await Promise.all(files.map(async path =>
   [path, buildHash(await readFile(prefix + path))])));
 const before = await hashes(sources);
@@ -20,7 +20,7 @@ buildContracts();
 
 // Bind the artifact to every actual compiler input, including pinned upstream code.
 const compilerInputs = new Map<string, string>();
-for (const name of ['Kernel', 'KernelFactory', 'ECDSAValidator', 'RailgunExecutor']) {
+for (const name of ['Kernel', 'KernelFactory', 'ECDSAValidator', 'RailgunExecutor', 'MultiAssetRailgunExecutor']) {
   for (const [path, source] of Object.entries(contractArtifact(name).metadata.sources)) {
     assert.equal(keccak256(await readFile(path)), source.keccak256, `Compiler/source mismatch: ${path}`);
     compilerInputs.set(path, source.keccak256);
@@ -33,6 +33,7 @@ execFileSync('node_modules/.bin/tsc', ['-p', 'sdk/tsconfig.json'], { stdio: 'inh
 await copyFile('LICENSE', 'sdk/LICENSE');
 await copyFile('sdk/poseidon-provenance.txt', 'sdk/poseidon-lite-NOTICE');
 await writeFile('sdk/dist/contracts.json', JSON.stringify(recoveryArtifacts()) + '\n');
+await writeFile('sdk/dist/multi-asset-contracts.json', JSON.stringify(recoveryArtifacts(true)) + '\n');
 const inputs = await hashes([...new Set([...sources, ...compilerInputs.keys()])]);
 for (const [path, hash] of Object.entries(before)) assert.equal(inputs[path], hash, `Source changed during build: ${path}`);
 const outputs = ['LICENSE', 'poseidon-lite-NOTICE', ...(await readdir('sdk/dist', { recursive: true, withFileTypes: true }))

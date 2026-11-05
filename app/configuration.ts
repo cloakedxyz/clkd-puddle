@@ -2,6 +2,7 @@ import type { Deployment } from '../sdk/index.ts';
 import { getAddress, ZeroAddress } from 'ethers';
 
 export interface RailgunSiteConfiguration {
+  multiAsset?: boolean;
   chainId: string;
   chainName: string;
   rpcUrl: string;
@@ -30,6 +31,8 @@ export interface RailgunSiteConfiguration {
 }
 
 export function validateRailgunSiteConfiguration(value: RailgunSiteConfiguration): RailgunSiteConfiguration {
+  if (value?.multiAsset !== undefined && typeof value.multiAsset !== 'boolean') throw new Error('Invalid asset mode.');
+  if (value?.multiAsset && (value.automaticRelay || value.bridgeOrigins?.length)) throw new Error('Multi-asset receiving currently uses a manual operator on the same chain.');
   if (value?.automaticRelay !== undefined && typeof value.automaticRelay !== 'boolean') throw new Error('Invalid automatic relay setting.');
   if (value?.rpcTransport !== undefined && !['proxy', 'direct'].includes(value.rpcTransport)) throw new Error('Invalid RPC transport.');
   if (!value || !/^[1-9][0-9]{0,15}$/.test(value.chainId)
@@ -78,7 +81,7 @@ export function validateRailgunSiteConfiguration(value: RailgunSiteConfiguration
 }
 
 export function siteDeployment(value: RailgunSiteConfiguration): Deployment {
-  return { chainId: BigInt(value.chainId), factory: value.factory, implementation: value.implementation,
+  return { ...(value.multiAsset ? {multiAsset: true} : {}), chainId: BigInt(value.chainId), factory: value.factory, implementation: value.implementation,
     validator: value.validator, executor: value.executor, pool: value.pool, poolImplementation: value.poolImplementation,
     assetImplementation: value.assetImplementation ?? null, asset: value.token,
     maxGasFee: BigInt(value.maxGasFee), codeHashes: { ...value.codeHashes } };

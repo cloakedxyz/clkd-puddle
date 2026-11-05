@@ -27,7 +27,8 @@ npm run dev
 
 Open **http://127.0.0.1:5177**. The demo runs a fresh local chain with real Kernel
 and RAILGUN contracts and disposable wallets. Save recovery, fund the account,
-then relay the deposit. The same interface restores saved recovery files.
+then complete the test deposit with the local demo action or configured operator wallet.
+The demo accepts ETH and standard ERC-20s without asking for an amount at address creation. The same interface restores saved recovery files.
 Restarting clears the local chain.
 
 For automatic settlement with a disposable wrapped-native token, run
@@ -86,7 +87,8 @@ an actual package installation outside the checkout.
 
 ## Limits
 
-Standard ERC-20 tokens only. Initial transfers and reused recovery addresses are
+The broader local receiving flow supports ETH and standard ERC-20 tokens, excluding
+rebasing, lottery and taxed tokens. The public website remains on its deployed WETH route. Initial transfers and reused recovery addresses are
 publicly linkable. RAILGUN governance and screening are external dependencies.
 The pilot CLI requires an explicit relay action. An optional WETH worker has local
 restart, budget and browser coverage; production operations and independent review

@@ -142,8 +142,7 @@ a.build-version:hover { color: var(--text); }
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .railgun-card { padding: 28px; }
-.receive-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
-.receive-heading .preview-label { margin: 0; font-size: 11px; }
+.receive-heading { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-bottom: 22px; }
 .network-picker { position: relative; flex-shrink: 0; }
 .chain-menu-toggle { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 24px; background: var(--field); padding: 7px 11px; color: var(--text); font-size: 11px; }
 .chain-menu-toggle > svg { flex-shrink: 0; color: var(--secondary); }

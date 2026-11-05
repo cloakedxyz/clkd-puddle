@@ -206,3 +206,55 @@ Prepare recipient instructions locally and save recovery before showing an addre
 Use a configured manual operator for deposit completion.
 Implement the guide's acceptance checks and report what was verified.
 ```
+
+## Receive without choosing a token first
+
+The repository also implements token-independent receiving with
+`MultiAssetRailgunExecutor`. This module needs a new deployment before the public
+website can enable it; the existing public route remains WETH-only. The local demo
+uses this flow. Use its matching contract artifact and a reviewed deployment with
+`multiAsset: true`; setting that flag on the existing executor does not enable it.
+
+The user supplies their two addresses and network. Save recovery, show the receiving
+address, then discover the transferred token and amount. ETH is wrapped automatically.
+Only standard ERC-20 behavior is supported; exclude rebasing, lottery and taxed tokens.
+
+```ts
+import type { Provider } from "ethers";
+import {
+  prepareFlexibleReceive,
+  discoverFunding,
+  quoteFunding,
+  type Deployment,
+  type RailgunInput,
+  type RecoveryFile,
+} from "@cloakedxyz/puddle";
+import artifacts from "@cloakedxyz/puddle/multi-asset-contracts" with { type: "json" };
+
+export async function createFlexiblePuddleAddress(
+  provider: Provider,
+  deployment: Deployment,
+  input: RailgunInput,
+  saveRecovery: (file: RecoveryFile) => Promise<void>,
+) {
+  const prepared = await prepareFlexibleReceive(provider, deployment, input, artifacts);
+  await saveRecovery(prepared.recovery);
+  return prepared.record;
+}
+
+export { discoverFunding, quoteFunding };
+```
+
+After funding, `discoverFunding` supplies candidates. Keep its token list and scan
+cursor between polls; see the [API reference](api.md#token-independent-receiving)
+for bounds and unreadable tokens. If several assets arrive, ask which one to deposit.
+Each receiving address still completes one private deposit.
+
+The configured operator reviews an unfamiliar token and supplies a `TokenApproval`
+from its token policy to `quoteFunding`, together with reimbursement in the received
+token. Do not turn discovered metadata into automatic approval. The manual UI starts
+with zero gas reimbursement; the operator must accept paying gas or quote a fee.
+Show the quote before execution. The contract caps token reimbursement at 5%, with
+an additional absolute ceiling for ETH/WETH. Owner recovery remains available for
+assets that cannot be deposited. The automatic worker and public bridge routes do
+not support this mode.

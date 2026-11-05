@@ -27,14 +27,14 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
       await validateSiteRelease(release);
       if (!isDeepStrictEqual(publicSiteConfiguration(checked), release.configuration)) throw new Error('Site release/configuration mismatch.');
       artifacts = release.artifacts;
-    } else { await verifySdkBuild(); artifacts = recoveryArtifacts(); }
+    } else { await verifySdkBuild(); artifacts = recoveryArtifacts(!!checked.multiAsset); }
     const provider = new JsonRpcProvider(checked.rpcUrl, undefined, {batchMaxCount: 1, cacheTimeout: -1});
     try { await verifyDeployment(provider, siteDeployment(checked), artifacts); }
     finally { provider.destroy(); }
   }
   await rm(output, {recursive: true, force: true});
   await mkdir(join(output, 'assets/chains'), {recursive: true});
-  await build({entryPoints: ['app/theme.ts', 'app/site.ts', ...(configuration ? ['app/railgun.ts'] : [])],
+  await build({entryPoints: {theme: 'app/theme.ts', site: 'app/site.ts', ...(configuration ? {railgun: configuration.multiAsset ? 'app/multi-asset.ts' : 'app/railgun.ts'} : {})},
     outdir: output, bundle: true, format: 'esm', platform: 'browser', target: 'es2022', minify: true});
   await writeFile(join(output, 'index.html'), await renderApp(configuration ? 'railgun' : 'public'));
   if (configuration) {

@@ -6,7 +6,7 @@ import type { Deployment, DepositRecord, RecoveryArtifacts } from './kernel.ts';
 
 type SavedDeployment = Omit<Deployment, 'chainId' | 'maxGasFee'> & {chainId: string; maxGasFee: string};
 export interface RecoveryFile extends SavedDeployment {
-  format: 'puddle-kernel-railgun-recovery'; version: 1; protocol: 'railgun';
+  format: 'puddle-kernel-railgun-recovery'; version: 1 | 2; fundingBlock?: number; protocol: 'railgun';
   depositAddress: string; salt: string; config: DepositRecord['config'];
 }
 export function recoveryRecord(file: RecoveryFile): DepositRecord {
@@ -15,7 +15,8 @@ export function recoveryRecord(file: RecoveryFile): DepositRecord {
 }
 export function createRecoveryFile(record: DepositRecord): RecoveryFile {
   return parseRecoveryFile(JSON.stringify({
-    format: 'puddle-kernel-railgun-recovery', version: 1, protocol: 'railgun',
+    format: 'puddle-kernel-railgun-recovery', version: record.multiAsset ? 2 : 1, protocol: 'railgun',
+    ...(record.multiAsset ? {multiAsset: true, fundingBlock: record.fundingBlock} : {}),
     chainId: String(record.chainId), maxGasFee: String(record.maxGasFee),
     factory: record.factory, implementation: record.implementation, validator: record.validator,
     executor: record.executor, pool: record.pool, asset: record.asset, codeHashes: record.codeHashes,
@@ -46,11 +47,13 @@ function implementationPin(value: unknown): Deployment['poolImplementation'] {
 export function parseRecoveryFile(text: string): RecoveryFile {
   requireThat(new TextEncoder().encode(text).length <= 16384, 'Recovery file is too large.');
   const input: unknown = JSON.parse(text);
+  const multi = input && typeof input === 'object' && 'version' in input && input.version === 2;
   const hasAssetPin = input && typeof input === 'object' && Object.hasOwn(input, 'assetImplementation');
   const file = object(input, ['format', 'version', 'protocol', 'chainId', 'factory', 'implementation', 'validator',
     'executor', 'pool', 'poolImplementation', 'asset', 'maxGasFee', 'codeHashes', 'depositAddress', 'salt', 'config',
-    ...(hasAssetPin ? ['assetImplementation'] : [])]);
-  requireThat(file.format === 'puddle-kernel-railgun-recovery' && file.version === 1 && file.protocol === 'railgun', 'Unsupported recovery format.');
+    ...(hasAssetPin ? ['assetImplementation'] : []), ...(multi ? ['multiAsset', 'fundingBlock'] : [])]);
+  requireThat(file.format === 'puddle-kernel-railgun-recovery' && (file.version === 1 || file.version === 2) && file.protocol === 'railgun', 'Unsupported recovery format.');
+  if (multi) requireThat(file.multiAsset === true && Number.isSafeInteger(file.fundingBlock) && (file.fundingBlock as number) >= 0, 'Invalid funding scan start.');
   const config = object(file.config, ['recipient', 'recovery', 'relayer', 'feeRecipient']);
   requireThat(typeof config.recipient === 'string' && /^0x[\da-fA-F]{320}$/.test(config.recipient), 'Invalid recipient instructions.');
   requireThat(typeof file.salt === 'string' && /^0x[\da-fA-F]{64}$/.test(file.salt), 'Invalid account salt.');
@@ -58,7 +61,8 @@ export function parseRecoveryFile(text: string): RecoveryFile {
   const hashes = object(file.codeHashes, [...names]);
   for (const value of Object.values(hashes)) requireThat(typeof value === 'string' && /^0x[\da-f]{64}$/.test(value), 'Invalid code hash.');
   const result: RecoveryFile = {
-    format: 'puddle-kernel-railgun-recovery', version: 1, protocol: 'railgun',
+    format: 'puddle-kernel-railgun-recovery', version: multi ? 2 : 1, protocol: 'railgun',
+    ...(multi ? {multiAsset: true, fundingBlock: file.fundingBlock as number} : {}),
     chainId: uint(file.chainId, 64), maxGasFee: uint(file.maxGasFee, 120),
     ...Object.fromEntries(names.map(name => [name, address(file[name])])) as Pick<RecoveryFile, typeof names[number]>,
     poolImplementation: implementationPin(file.poolImplementation), assetImplementation: implementationPin(file.assetImplementation),
