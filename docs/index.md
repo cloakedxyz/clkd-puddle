@@ -3,27 +3,30 @@
 Puddle turns a normal token transfer into a deposit in your RAILGUN private wallet.
 Create a receiving address, send from your usual wallet and receive privately.
 
-The website accepts **0.0001 WETH on Arbitrum One** per receiving address.
-WETH is ETH represented as a token.
+Send **ETH or a standard ERC-20 on Arbitrum One**. Puddle detects the token and
+amount after funding. ETH is wrapped automatically before the private deposit.
 
 ## Create your address
 
 1. Enter your RAILGUN address and a recovery wallet you control.
-2. Review the amount, network and fees.
-3. Save your recovery file, then send to your Puddle address.
+2. Save your recovery file to reveal the receiving address.
+3. Send ETH or a supported token from your usual wallet.
 
-You only enter the two addresses. The website supplies the token, network and amount.
+You only enter the two addresses. Choose the network, then send the token and amount
+you want to receive privately.
 Creating an address needs no wallet connection.
 
 An operator completes the private deposit. Arrange this before sending funds.
 Check your RAILGUN wallet for the deposit; it becomes available after screening.
-Use a new Puddle address for each deposit.
+Use a new Puddle address for each deposit. If several assets arrive, choose one to
+deposit and recover the others. Rebasing, lottery and taxed tokens are unsupported.
 
 ## Fees
 
 Puddle charges 0.1%, plus gas reimbursement and RAILGUN's pool fee.
-Review the estimated private balance and maximum gas charge before sending.
-The operator's gas reimbursement can change within that maximum.
+The gas charge is quoted in the received token, up to 5% of the deposit. ETH/WETH
+also have an absolute ceiling shown before funding. Review the final fees and
+estimated private balance with the operator before completion.
 
 ## Recovery
 

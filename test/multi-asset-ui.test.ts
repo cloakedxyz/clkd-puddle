@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
-import {Contract, ContractFactory, parseEther} from 'ethers';
+import {Contract, ContractFactory, parseEther, keccak256} from 'ethers';
 import {chromium} from 'playwright';
 import {startRailgunDemo} from '../scripts/railgun-app.ts';
-import {decryptDeposit} from './helpers.ts';
-import {parseRecoveryFile} from '../sdk/index.ts';
+import {decryptDeposit, fund} from './helpers.ts';
+import {parseRecoveryFile, createRailgunAdapter, createRecoveryFile, inspectRecovery} from '../sdk/index.ts';
+import {contractArtifact, recoveryArtifacts} from '../scripts/artifacts.ts';
 
 test('flexible browser flow requires only two addresses, detects ETH and ERC-20s, quotes manually and recovers other funds', {timeout: 150_000}, async () => {
   const app = await startRailgunDemo(0, false, true);
@@ -21,7 +22,7 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
     await page.addInitScript(() => {(window as unknown as {ethereum: unknown}).ethereum = {request: (request: unknown) =>
       (window as unknown as {testWalletRequest: (request: unknown) => Promise<unknown>}).testWalletRequest(request)};});
     await page.goto(app.url);
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     assert.equal(await page.locator('#amount-entry').isVisible(), false);
     assert((await page.locator('#route-description').innerText()).includes('ETH and tokens'));
     for (const native of [true, false]) {
@@ -99,6 +100,32 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
     await page.locator('#demo-fund').click(); await page.locator('#demo-relay').waitFor({state: 'visible'});
     await page.locator('#demo-relay').click();
     await page.waitForFunction(() => document.querySelector('#balance-status')?.textContent?.includes('Pool deposit executed'));
+    // Previously issued WETH recovery files remain usable after the website switches modules.
+    const legacyArtifact = contractArtifact('RailgunExecutor');
+    const oldModule = await new ContractFactory(legacyArtifact.abi, legacyArtifact.bytecode.object, app.env.deployer)
+      .deploy(app.env.deployment.factory, app.env.deployment.pool, app.env.deployment.asset, app.env.deployment.maxGasFee);
+    await oldModule.waitForDeployment();
+    const legacyDeployment = {...app.env.deployment, multiAsset: false, executor: await oldModule.getAddress(),
+      codeHashes: {...app.env.deployment.codeHashes, executor: keccak256(await app.env.provider.getCode(await oldModule.getAddress()))}};
+    const legacyRecord = await createRailgunAdapter(legacyDeployment).prepare(app.env.provider, {
+      recipient: app.recipient.address, recovery: await app.env.recovery.getAddress(),
+      relayer: await app.env.relayer.getAddress(), feeRecipient: await app.env.feeCollector.getAddress()});
+    const legacyFile = createRecoveryFile(legacyRecord); assert.equal(legacyFile.version, 1);
+    const wrongArtifacts = recoveryArtifacts(true); wrongArtifacts.previousExecutor!.code = '0x00';
+    await assert.rejects(inspectRecovery(app.env.provider, legacyFile, wrongArtifacts), /Unrecognized executor/);
+    await fund(app.env, legacyRecord.address, parseEther('0.001'));
+    await (await app.env.sender.sendTransaction({to: legacyRecord.address, value: 123n})).wait();
+    await page.locator('#restore-backup').setInputFiles({name: 'earlier-recovery.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(legacyFile))});
+    await page.waitForFunction(() => document.querySelector('#balance-status')?.textContent?.includes('Recovery restored'));
+    assert.equal(await page.locator('#funding-instructions').isVisible(), false);
+    await page.locator('#wallet-tools').evaluate(element => {(element as HTMLDetailsElement).open = true;});
+    await page.locator('#connect-wallet').click(); await page.locator('#recovery-asset').fill('ETH');
+    await page.locator('#recover-from-wallet').click();
+    await page.waitForFunction(() => !(document.querySelector('#refresh-deposit') as HTMLButtonElement)?.disabled);
+    assert.equal(await app.env.provider.getBalance(legacyRecord.address), 0n);
+    await page.locator('#recovery-asset').fill(app.env.deployment.asset); await page.locator('#recover-from-wallet').click();
+    await page.waitForFunction(() => !(document.querySelector('#refresh-deposit') as HTMLButtonElement)?.disabled);
+    assert.equal(await app.env.token.balanceOf(legacyRecord.address), 0n);
     assert.deepEqual(errors, []);
   } finally {await browser.close(); await app.close();}
 });

@@ -6,7 +6,8 @@ Puddle uses unmodified Kernel v3.3 accounts, factory and ECDSA owner validator, 
 at `cd697c7e21715d015e0643af22310a99aa17433b`. Its settlement rules live in
 `contracts/RailgunExecutor.sol`, a restricted execution module.
 `MultiAssetRailgunExecutor` extends those rules to token selection after funding and
-atomic wrapping of ETH. The current public route still uses the first executor. Puddle has no custom
+atomic wrapping of ETH. The public route uses the multi-asset executor. The earlier template remains
+available only for compatibility with existing accounts and recovery files. Puddle has no custom
 receiving account, factory, account upgrade authority or generic relayer batch API.
 
 ## Receiving account

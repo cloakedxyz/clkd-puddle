@@ -65,8 +65,8 @@ The approved ten-transaction Arbitrum plan completed with a native debit of
 ## Website and bridge scope
 
 The [website](https://puddle.link) and [API reference](https://puddle.link/docs/api/)
-are published. The receiving interface accepts 0.0001 WETH per address on
-Arbitrum One. It saves recovery before revealing funding instructions and requires
+are published. The receiving interface accepts ETH and standard ERC-20s on Arbitrum One,
+with token and amount discovered after transfer. It saves recovery before revealing funding instructions and requires
 arranging with the operator before funding. It has no hosted signer or automatic
 service. Browser preparation against the real deployed route passed without signing
 or funding another live account.
@@ -106,8 +106,12 @@ See the [release checklist](docs/releasing.md).
 The repository adds `MultiAssetRailgunExecutor`, extending the same restricted
 Kernel module to choose a token after funding. Native ETH is wrapped atomically;
 other standard ERC-20s use the same fixed encrypted recipient and recovery owner.
-The public website remains on its deployed WETH-only executor until the new module
-is deployed and its route is reviewed.
+The module is deployed on Arbitrum at
+[`0x4eD7b9a4077821Bc5B7C8587413CA3De4c718631`](https://arbiscan.io/address/0x4eD7b9a4077821Bc5B7C8587413CA3De4c718631#code).
+Arbiscan verified its source, and [Sourcify](https://repo.sourcify.dev/42161/0x4eD7b9a4077821Bc5B7C8587413CA3De4c718631) reported a match. A separately approved six-transaction
+rollout deposited 0.00005 ETH and 0.00005 WETH through it, with a native debit of
+0.000203452735816 ETH below the 0.0004 ETH cap. Both exact recipient notes were
+independently discovered in the intended wallet; screening is tracked separately.
 
 Local protocol and browser checks cover ETH, 6- and 18-decimal tokens, tokens with no
 return value, taxed/blocked token rollback, proxy implementation changes, one-time
@@ -118,5 +122,5 @@ copyable token-independent integration module is checked against the installed S
 Token discovery does not establish safe token behavior. Unfamiliar tokens require
 operator review; rebasing, lottery and taxed tokens are excluded. There is no generic
 token-to-gas pricing service: the manual operator agrees to the quoted reimbursement.
-The existing automatic WETH worker rejects multi-asset mode. A new deployment and a
-bounded live rehearsal are still required before changing the public receiving route.
+The existing automatic WETH worker rejects multi-asset mode. The earlier version-1 recovery format remains usable with the compiled compatibility
+template. The automatic worker and public bridge routes remain disabled for this mode.

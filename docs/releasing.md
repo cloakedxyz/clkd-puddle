@@ -56,7 +56,7 @@ runtime templates and source hashes, with no recipient or recovery profile. Revi
 against the independently compiled SDK, then build the host checkout with
 `PUDDLE_SITE_RELEASE=NEW_RELEASE_JSON npm run build:site`. Changed source or deployed
 code fails the build. Vercel uses `deployments/arbitrum.json` for the manual receiving
-flow, with a 0.0001 WETH per-address UI limit. The operator coordinates funding and
+flow for ETH and standard ERC-20s, with funding discovered after transfer. The operator coordinates funding and
 completes the deposit. The default build contains the landing page and docs; select
 a configuration or release path to include the receiving interface.
 

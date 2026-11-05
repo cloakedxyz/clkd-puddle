@@ -7,7 +7,7 @@ Start with the [wallet and agent integration guide](https://puddle.link/docs/int
 It covers setup, receiving, manual completion and recovery. The API below is an SDK;
 Puddle does not operate a hosted REST service.
 
-Prepare an ordinary ERC-20 receiving account from a public RAILGUN address and
+Prepare an ETH/ERC-20 receiving account from a public RAILGUN address and
 recovery owner. The SDK runs in browsers and Node 24.12+, without recipient keys,
 setup signatures or the full wallet engine. Kernel supplies the account and factory;
 Puddle's restricted module supplies settlement rules.
@@ -27,35 +27,33 @@ rebuild after source edits. Do not bypass the guard with `--ignore-scripts` when
 ## Prepare
 
 ```ts
-import { prepareRailgunReceive } from "@cloakedxyz/puddle";
-import artifacts from "@cloakedxyz/puddle/contracts" with { type: "json" };
+import { prepareFlexibleReceive } from "@cloakedxyz/puddle";
+import artifacts from "@cloakedxyz/puddle/multi-asset-contracts" with { type: "json" };
 
-const { deposit, recovery } = await prepareRailgunReceive(
+const { record, recovery } = await prepareFlexibleReceive(
   provider,
   reviewedDeployment,
   { recipient: publicRailgunAddress, recovery: owner, relayer, feeRecipient },
-  { token, amount, gasFee, deadline },
   artifacts,
 );
-// Save recovery privately before displaying deposit.address for funding.
+// Save recovery privately before displaying record.address for funding.
 ```
 
-`Deployment` specifies chain ID, stock Kernel factory/implementation/validator,
-Puddle executor, pool and asset (including their proxy implementation pins), immutable gas ceiling and code hashes. It is a trusted
-application input, not data to accept from an untrusted API. `amount` and `gasFee`
-are token base units; `deadline` is a Unix timestamp. Use bigint values.
+Use a reviewed `Deployment` with `multiAsset: true` and the matching artifact.
+`discoverFunding` finds ETH and token balances after transfer. `quoteFunding`
+requires approval from a reviewed standard-token policy, then `relayDeposit`
+completes with the bound operator wallet. `mined` waits for confirmation.
 
-`createRailgunAdapter(deployment)` exposes preparation and quote refresh. A quote
-can change amount, expiry and gas reimbursement while preserving the account and
-encrypted recipient. The relayer can charge up to the module's immutable gas ceiling;
-an individual estimate is not an on-chain commitment to that exact charge. Show the
-ceiling before funding. The service fee remains 0.1%.
-`inspectDeposit` reads funding/use state. `relayDeposit` submits through the executor
-using the bound relayer and returns the transaction immediately; `mined` waits for
-confirmation. Confirmation is separate from recipient discovery and screening.
+Gas reimbursement is in the received token and capped at 5%. ETH/WETH also have
+an absolute wrapped-native ceiling. Show those limits before funding and the
+quoted fees before completion. The service fee is 0.1%, plus RAILGUN's pool fee.
+Exclude rebasing, lottery and taxed tokens. Metadata does not prove safe token behavior.
+
+The earlier amount-quoted functions remain available for existing WETH routes.
+Confirmation, recipient discovery and screening are distinct checks.
 
 The runnable [example](examples/receive.mjs) reads a reviewed UI configuration and
-public profile, saves recovery/quote files and prints the account only after saving:
+public profile, saves recovery/receiving files and prints the account only after saving:
 
 ```sh
 node node_modules/@cloakedxyz/puddle/examples/receive.mjs --help
@@ -91,13 +89,3 @@ authorization; account recovery controls funds that have reached the Kernel addr
 Original code is MIT; dependencies and built upstream contracts retain their own
 licenses. See NOTICE and SECURITY.md. `npm run test:sdk-package` checks an actual
 isolated installation, types, example and browser bundle from the repository.
-
-## Token-independent addresses
-
-`prepareFlexibleReceive` creates an address before a token or amount is chosen.
-`discoverFunding` reads ETH and ERC-20 balances; `quoteFunding` requires a reviewed
-standard-token approval before manual completion. Use a deployed
-`MultiAssetRailgunExecutor`, `multiAsset: true` and the
-`@cloakedxyz/puddle/multi-asset-contracts` artifact. The current website's executor
-remains WETH-only. See the [integration guide](../docs/integrate.md#receive-without-choosing-a-token-first)
-for the copyable module, token exclusions, fee caps and recovery behavior.

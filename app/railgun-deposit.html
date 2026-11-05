@@ -1,5 +1,7 @@
 <div class="demo-card railgun-card">
+  <h2>Fund your private wallet.</h2>
   <div class="receive-heading">
+    <p class="description" id="route-description">Checking the deposit route…</p>
     <div class="network-picker" id="network-picker">
       <button type="button" class="chain-menu-toggle" id="chain-menu-toggle" aria-expanded="false" aria-controls="chain-menu" aria-label="Choose funding network" disabled>
         <img class="chain-logo" id="selected-chain-logo" width="20" height="20" alt="" hidden>
@@ -11,13 +13,11 @@
       <select id="source-chain" aria-label="Fund from" aria-hidden="true" tabindex="-1" hidden><option value="">Same chain</option></select>
     </div>
   </div>
-  <h2>Fund your private wallet.</h2>
-  <p class="description" id="route-description">Checking the deposit route…</p>
   <div class="notice" id="error" role="alert" hidden></div>
   <form id="receive-form">
     <div class="form-field">
       <label class="field-label" for="private-recipient">RAILGUN address</label>
-      <textarea class="text-input" id="private-recipient" rows="2" spellcheck="false" autocomplete="off" placeholder="0zk…" required></textarea>
+      <input class="text-input" id="private-recipient" type="text" spellcheck="false" autocomplete="off" placeholder="0zk…" required>
     </div>
     <div class="form-field">
       <label class="field-label" for="recovery-owner">Recovery wallet</label>
