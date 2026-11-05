@@ -57,10 +57,10 @@ export async function validateSiteRelease(input: SiteRelease, compareCompiled = 
   check(input.format === 'puddle-site-release' && input.version === 1, 'Unsupported site release.');
   check(isDeepStrictEqual(input.configuration, publicSiteConfiguration(input.configuration)), 'Site release contains nonpublic or noncanonical configuration.');
   const artifacts = input.artifacts;
-  exactKeys(artifacts, ['format', 'version', 'contracts']);
+  exactKeys(artifacts, ['format', 'version', 'contracts', ...(artifacts.previousExecutor ? ['previousExecutor'] : [])]);
   check(artifacts.format === 'puddle-kernel-artifacts' && artifacts.version === 1, 'Unsupported release artifacts.');
   exactKeys(artifacts.contracts, ['factory', 'implementation', 'validator', 'executor']);
-  for (const contract of Object.values(artifacts.contracts)) {
+  for (const contract of [...Object.values(artifacts.contracts), ...(artifacts.previousExecutor ? [artifacts.previousExecutor] : [])]) {
     exactKeys(contract, ['code', 'references']);
     check(typeof contract.code === 'string' && /^0x(?:[\da-fA-F]{2})+$/.test(contract.code)
       && contract.code.length <= 100_000, 'Invalid released contract runtime.');

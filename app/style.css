@@ -141,15 +141,29 @@ a.build-version:hover { color: var(--text); }
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.railgun-card { padding: 28px; }
-.receive-heading { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-bottom: 22px; }
-.network-picker { position: relative; flex-shrink: 0; }
-.chain-menu-toggle { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 24px; background: var(--field); padding: 7px 11px; color: var(--text); font-size: 11px; }
-.chain-menu-toggle > svg { flex-shrink: 0; color: var(--secondary); }
+.railgun-card { padding: 24px; border-radius: 26px; box-shadow: 0 8px 40px #00000006; }
+.railgun-card > h2 { font-size: 20px; font-weight: 600; letter-spacing: -.5px; margin-bottom: 18px; }
+.receive-heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 18px; }
+.receive-heading .description { margin: 0; }
+.network-picker, .protocol-picker { position: relative; min-width: 0; }
+.chain-menu-toggle { display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 14px; background: var(--field); padding: 10px 11px; color: var(--text); font-size: 12px; font-weight: 550; transition: background .16s, border-color .16s, transform .24s cubic-bezier(.2,.9,.3,1.3); }
+.chain-menu-toggle:hover:not(:disabled) { border-color: var(--line); }
+.chain-menu-toggle[aria-expanded="true"] { border-color: var(--line); background: var(--surface); }
+.chain-menu-toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.chain-menu-toggle > svg { flex-shrink: 0; color: var(--secondary); transition: transform .18s ease; }
 #selected-chain-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chain-logo { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; border-radius: 50%; }
 .chain-logo[data-chain-id="1"] { background: #627eea; }
-.chain-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: 250px; max-width: calc(100vw - 50px); max-height: min(360px, 60vh); overflow-y: auto; padding: 5px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 10px 32px #0002; }
+.chain-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: 250px; max-width: calc(100vw - 50px); max-height: min(360px, 60vh); overflow-y: auto; padding: 5px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 12px 36px #0002; transform-origin: top right; }
+.chain-menu:not([hidden]) { animation: picker-open .18s cubic-bezier(.2,.9,.3,1.15) both; }
+@keyframes picker-open { from { opacity: 0; transform: translateY(-5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.protocol-menu { left: 0; right: auto; width: 300px; transform-origin: top left; padding: 6px; }
+.picker-title { margin: 8px 10px 10px; color: var(--secondary); font-size: 11px; font-weight: 500; }
+.protocol-logo { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; border-radius: 50%; background: #fff; }
+.protocol-choice { min-height: 54px; }
+.protocol-choice .protocol-logo { width: 28px; height: 28px; }
+.protocol-choice .chain-choice-state { padding: 4px 7px; border-radius: 7px; background: var(--field); font-size: 10px; white-space: nowrap; }
+.protocol-choice[aria-pressed="true"] .chain-choice-state { color: var(--green); background: var(--success); }
 .chain-choice { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 9px; background: transparent; color: var(--text); font-size: 12px; text-align: left; }
 .chain-choice:hover:not(:disabled), .chain-choice[aria-pressed="true"] { background: var(--field); }
 .chain-choice:disabled { opacity: .65; }
@@ -158,11 +172,18 @@ a.build-version:hover { color: var(--text); }
 .process-note { margin: 0 0 24px; color: var(--secondary); font-size: 11px; line-height: 1.6; }
 .deposit-review { display: grid; gap: 8px; margin: 20px 0; padding: 18px 20px; border-radius: 18px; background: var(--field); }
 .deposit-review strong { font-size: 26px; font-weight: 500; letter-spacing: -.5px; }
-#receive-form { display: grid; gap: 20px; }
-.form-field { display: grid; gap: 8px; min-width: 0; }
+#receive-form { display: grid; gap: 10px; }
+.form-field { display: grid; gap: 6px; min-width: 0; padding: 13px 15px; border: 1px solid transparent; border-radius: 16px; background: var(--field); transition: background .18s, border-color .18s, box-shadow .18s; }
+.form-field:focus-within { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 9%, transparent); }
+.form-field .field-label { font-size: 11px; font-weight: 500; }
 .railgun-card .text-input { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; margin: 0; transition: border-color .15s; }
 .railgun-card .text-input:hover { border-color: var(--secondary); }
-.railgun-card textarea.text-input { min-height: 84px; resize: vertical; }
+.railgun-card .form-field .text-input { height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 16px; outline: none; box-shadow: none; }
+#recovery-hint { margin: 0 2px 4px; font-size: 11px; }
+#receive-form .primary { min-height: 52px; margin-top: 4px; font-size: 14px; font-weight: 550; }
+.railgun-card button { transition: transform .24s cubic-bezier(.2,.9,.3,1.3), background .16s, border-color .16s, box-shadow .16s; }
+.railgun-card button:active:not(:disabled) { transform: scale(.975); }
+.railgun-card button:disabled { cursor: default; }
 .railgun-card .text-input::placeholder { color: var(--muted); }
 .form-hint { margin: 0; font-size: 11px; line-height: 1.5; color: var(--secondary); }
 .asset-badge { flex-shrink: 0; border: 1px solid var(--line); border-radius: 20px; padding: 7px 11px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: 500; }
@@ -183,3 +204,32 @@ a.build-version:hover { color: var(--text); }
 .railgun-card .button-note { overflow-wrap: anywhere; }
 .railgun-card #wallet-tools { margin-top: 16px; }
 @media (max-width: 540px) { .railgun-card { padding: 22px; } .receive-heading { gap: 10px; } #selected-chain-name { max-width: 110px; } }
+
+/* Receiving follows a short setup → backup → address sequence. */
+.icon { width: 18px; height: 18px; flex: 0 0 auto; vertical-align: middle; }
+.icon-button, .receive-info summary > span, #wallet-tools summary > span { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.picker-label { display: block; margin: 0 0 7px 4px; color: var(--secondary); font-size: 11px; }
+.receive-heading { margin-top: 20px; }
+.chain-menu-toggle { min-height: 55px; width: 100%; justify-content: flex-start; }
+.chain-menu-toggle > svg { margin-left: auto; }
+.destination-choice { display: grid; gap: 3px; text-align: left; }
+.destination-choice small { font-size: 10px; font-weight: 400; color: var(--secondary); }
+.protocol-menu { left: auto; right: 0; transform-origin: top right; }
+.recovery-emblem { display: grid; place-items: center; width: 64px; height: 64px; margin: 28px auto 16px; border-radius: 22px; color: var(--accent); background: var(--field); }
+.recovery-emblem .icon { width: 30px; height: 30px; }
+.recovery-explanation { max-width: 290px; margin: 0 auto 24px; text-align: center; color: var(--secondary); font-size: 13px; line-height: 1.65; }
+.funding-network { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--secondary); margin: 20px 0 16px; }
+.receiving-qr { width: 208px; height: 208px; padding: 8px; margin: 0 auto; border-radius: 20px; background: #fff; color: #000; }
+.receiving-qr svg { display: block; width: 100%; height: 100%; }
+.railgun-address { margin: 12px 0 16px; padding: 14px; border-radius: 14px; background: var(--field); color: var(--text); text-align: center; font-size: 13px; line-height: 1.65; }
+#balance-status { text-align: center; margin: 18px 0 0; font-size: 12px; color: var(--secondary); line-height: 1.6; }
+#manual-deposit-note { margin: 16px 0 0; text-align: center; font-size: 11px; }
+.receive-info, #wallet-tools { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--secondary); font-size: 12px; }
+.receive-info > summary, #wallet-tools > summary { min-height: 30px; }
+.receive-info summary > span, #wallet-tools summary > span { justify-content: flex-start; }
+.receive-info summary .icon, #wallet-tools summary .icon { width: 16px; height: 16px; }
+.receive-info[open] > summary > svg, #wallet-tools[open] > summary > svg { transform: rotate(180deg); }
+#receive-details > #save-backup { margin-top: 16px; }
+#receive-details > #new-receive { border: 0; background: transparent; margin-top: 12px; padding: 10px; }
+#receive-details > #refresh-deposit { border: 0; background: transparent; padding: 9px; }
+#transaction-status:empty { display: none; }

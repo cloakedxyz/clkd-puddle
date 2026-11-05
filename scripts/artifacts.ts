@@ -10,14 +10,15 @@ export function contractArtifact(name: string) {
     deployedBytecode: { object: string; immutableReferences?: Record<string, {start: number; length: number}[]> };
   };
 }
+function runtime(name: string): RecoveryArtifacts['contracts']['executor'] {
+  const artifact = contractArtifact(name);
+  // Source IDs vary with the compilation unit; only byte offsets matter.
+  const offsets = Object.values(artifact.deployedBytecode.immutableReferences ?? {}).flat().sort((a, b) => a.start - b.start);
+  return {code: artifact.deployedBytecode.object, references: offsets.length ? {'0': offsets} : {}};
+}
 export function recoveryArtifacts(multiAsset = false): RecoveryArtifacts {
   const names = { factory: 'KernelFactory', implementation: 'Kernel', validator: 'ECDSAValidator', executor: multiAsset ? 'MultiAssetRailgunExecutor' : 'RailgunExecutor' };
   return { format: 'puddle-kernel-artifacts', version: 1,
-    contracts: Object.fromEntries(Object.entries(names).map(([key, name]) => {
-      const artifact = contractArtifact(name);
-      // Solidity's reference IDs depend on the compilation unit (for example whether
-      // tests were compiled alongside it). Only offsets matter for runtime matching.
-      const offsets = Object.values(artifact.deployedBytecode.immutableReferences ?? {}).flat().sort((a, b) => a.start - b.start);
-      return [key, { code: artifact.deployedBytecode.object, references: offsets.length ? {'0': offsets} : {} }];
-    })) as RecoveryArtifacts['contracts'] };
+    contracts: Object.fromEntries(Object.entries(names).map(([key, name]) => [key, runtime(name)])) as RecoveryArtifacts['contracts'],
+    ...(multiAsset ? {previousExecutor: runtime('RailgunExecutor')} : {}) };
 }

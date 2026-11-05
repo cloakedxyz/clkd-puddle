@@ -29,7 +29,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     });
     const response = await page.goto(app.url);
     assert.match(response?.headers()['content-security-policy'] ?? '', /frame-ancestors 'none'/);
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     let releaseRead!: () => void;
     let readStarted!: () => void;
     const gate = new Promise<void>(resolve => { releaseRead = resolve; });
@@ -48,7 +48,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     assert.equal(await page.locator('#source-chain').isDisabled(), true);
     assert.equal(await page.locator('#chain-menu-toggle').isDisabled(), true);
     // Even a programmatic edit during the pending read cannot relabel the prepared recipient.
-    await page.locator('#private-recipient').evaluate(element => { (element as HTMLTextAreaElement).value = 'changed while preparing'; });
+    await page.locator('#private-recipient').evaluate(element => { (element as HTMLInputElement).value = 'changed while preparing'; });
     releaseRead();
     await page.locator('#receive-details').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#recipient-summary').textContent(), `Recipient: ${app.recipient.address}`);
@@ -87,7 +87,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     await fund(app.env, file.depositAddress, 123_456n);
     selectedAccount = owner;
     await page.reload();
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#restore-backup').setInputFiles(path);
     await page.locator('#receive-details').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#funding-instructions').isVisible(), false, 'Restored recovery is not new funding instructions.');
@@ -125,7 +125,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
       } } });
     });
     await page.reload();
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#chain-menu-toggle').click();
     await page.locator('#chain-option-8453').click();
     assert.match(await page.locator('#selected-chain-logo').getAttribute('src') ?? '', /base\.png$/);
@@ -151,7 +151,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     // Same-chain funding uses the actual received amount, including an ordinary
     // transfer smaller than the initial estimate. The recipient remains fixed.
     await page.reload();
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({ state: 'visible' });
     const partialDownload = page.waitForEvent('download');
@@ -185,7 +185,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     // A pool change blocks settlement, but a saved file still deploys the original
     // Kernel account and recovers funds without querying the changed pool.
     await page.reload();
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({ state: 'visible' });
     const independentDownload = page.waitForEvent('download');
@@ -200,7 +200,7 @@ test('RAILGUN front end prepares in-browser, saves recovery, funds, relays, and 
     assert.equal(await page.locator('#demo-relay').isDisabled(), true);
     assert.equal(await page.locator('#funding-instructions').isVisible(), false);
     await page.reload();
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#restore-backup').setInputFiles(independentPath);
     await page.waitForFunction(() => document.querySelector('#balance-status')?.textContent?.includes('Recovery restored'));
     assert.equal(await page.locator('#error').isVisible(), false, await page.locator('#error').textContent() ?? '');
@@ -231,7 +231,7 @@ test('automatic receiving registers only after backup and shields without a reci
     page.on('request', request => { if (request.postData()) posts.push(request.postData()!); });
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(app.url);
-    await page.waitForFunction(() => !!document.querySelector<HTMLTextAreaElement>('#private-recipient')?.value);
+    await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     await page.locator('#prepare').click();
     await page.locator('#receive-details').waitFor({state: 'visible'});
     assert.equal(await page.locator('#funding-instructions').isVisible(), false);

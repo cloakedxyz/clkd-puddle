@@ -9,7 +9,7 @@ It cannot withdraw funds that have already been shielded into the private wallet
 1. Restore the recovery JSON file you saved before funding.
 2. Connect the wallet whose address is recorded as the recovery owner.
 3. Switch to the chain shown in the file and keep enough native currency for gas.
-4. Select **Recover remaining tokens**.
+4. Enter **ETH** or the token contract address to recover, then select **Recover funds**.
 5. If prompted, approve creation of your receiving account.
 6. Approve the recovery transaction and check your wallet balance.
 
@@ -20,7 +20,7 @@ If the site is unavailable, use the SDK below.
 
 ```ts
 import { parseRecoveryFile, inspectRecovery, recoveryTransaction, mined } from "@cloakedxyz/puddle";
-import artifacts from "@cloakedxyz/puddle/contracts" with { type: "json" };
+import artifacts from "@cloakedxyz/puddle/multi-asset-contracts" with { type: "json" };
 
 const file = parseRecoveryFile(savedJSON);
 const owner = await recoverySigner.getAddress();
@@ -41,8 +41,8 @@ await mined(
 ```
 
 Use the zero address as the asset to recover native currency, or another token
-address to recover a mistaken ERC-20 transfer. The website currently exposes recovery
-for the route token; the SDK exposes these additional choices.
+address to recover a mistaken ERC-20 transfer. The website supports both choices. Its trusted recovery artifact also recognizes
+the earlier WETH-only module, so version-1 files remain usable.
 
 ## Keep the file private
 

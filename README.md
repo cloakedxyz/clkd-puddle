@@ -7,7 +7,7 @@
 Fund your RAILGUN private wallet with an ordinary token transfer.
 Create a receiving address from your RAILGUN address and a recovery wallet.
 
-The website receives WETH on Arbitrum One. An operator completes each private
+The website receives ETH and standard ERC-20s on Arbitrum One. An operator completes each private
 deposit; coordinate before sending funds. The SDK is distributed as a repository
 build.
 
@@ -50,7 +50,8 @@ small module that enforces the recipient, one-time deposit and bounded fees.
 The SDK prepares encrypted recipient instructions locally and independently checks
 the account address, code, owner and module before funding.
 
-The service fee is 0.1%, plus a capped gas reimbursement and RAILGUN's pool fee.
+The service fee is 0.1%, plus capped gas reimbursement and RAILGUN's pool fee.
+ETH is wrapped automatically. Token and amount are detected after funding.
 Amounts can be requoted without changing the account or recipient. Excess, partial
 and late transfers remain recoverable by the owner through Kernel.
 
@@ -88,7 +89,7 @@ an actual package installation outside the checkout.
 ## Limits
 
 The broader local receiving flow supports ETH and standard ERC-20 tokens, excluding
-rebasing, lottery and taxed tokens. The public website remains on its deployed WETH route. Initial transfers and reused recovery addresses are
+rebasing, lottery and taxed tokens. The website uses the deployed multi-asset module. Initial transfers and reused recovery addresses are
 publicly linkable. RAILGUN governance and screening are external dependencies.
 The pilot CLI requires an explicit relay action. An optional WETH worker has local
 restart, budget and browser coverage; production operations and independent review
@@ -101,7 +102,7 @@ configuration file after building the SDK. The build checks deployed contracts a
 copies only public route fields and trusted artifacts. It uses the public RPC directly;
 no hosted signer or Puddle backend is required for the manual pilot.
 Vercel uses the reviewed public `deployments/arbitrum.json` bundle, checked against
-the compiled SDK in CI. The current website limit is 0.0001 WETH per address.
+the compiled SDK in CI. The receiving interface asks for neither a token nor an amount at address creation.
 
 [MIT](LICENSE) for original code. Upstream contracts and dependencies retain their
 own licenses; see [notices](sdk/NOTICE). The full wallet/proving engine is a test

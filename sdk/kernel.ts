@@ -31,6 +31,7 @@ export interface RecoveryArtifacts {
   // JSON imports infer string/number; the exact format/version are checked at runtime.
   format: string; version: number;
   contracts: Record<'factory' | 'implementation' | 'validator' | 'executor', RuntimeArtifact>;
+  previousExecutor?: RuntimeArtifact;
 }
 
 export const abi = AbiCoder.defaultAbiCoder();
@@ -123,7 +124,10 @@ export async function verifyDeployment(provider: Provider, deployment: Deploymen
     requireThat(code !== '0x' && keccak256(code) === deployment.codeHashes[name], `Wrong ${name} code.`);
     if (artifacts && name in artifacts.contracts) {
       const artifact = artifacts.contracts[name as keyof typeof artifacts.contracts];
-      requireThat(normalizedRuntime(code, artifact) === normalizedRuntime(artifact.code, artifact), `Unrecognized ${name} build.`);
+      const recognized = (template: RuntimeArtifact) => code.length === template.code.length
+        && normalizedRuntime(code, template) === normalizedRuntime(template.code, template);
+      requireThat(recognized(artifact) || name === 'executor' && recoveryOnly && artifacts.previousExecutor
+        && recognized(artifacts.previousExecutor), `Unrecognized ${name} build.`);
     }
   }
   const factory = new Contract(deployment.factory, factoryABI, provider);

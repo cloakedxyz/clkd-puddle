@@ -4,6 +4,8 @@ import {prepareFlexibleReceive, discoverFunding, quoteFunding, createRailgunAdap
   inspectRecovery, recoveryRecord, parseRecoveryFile, recoveryTransaction, relayDeposit, mined} from '../sdk/index.ts';
 import type {DepositRecord, DepositExecution, RecoveryFile, RecoveryArtifacts, FundingAsset, TokenApproval} from '../sdk/index.ts';
 import {siteDeployment, validateRailgunSiteConfiguration} from './configuration.ts';
+import {renderReceiveSteps, showReceivingCode} from './receive-card.ts';
+import {setupProtocolPicker} from './protocols.ts';
 import {setupNetworkPicker} from './networks.ts';
 
 const el = (id: string) => document.getElementById(id)!;
@@ -24,17 +26,20 @@ let approvedToken: TokenApproval | undefined;
 let scanComplete = true;
 let wallet: BrowserProvider | undefined, connected: string | undefined;
 const picker = setupNetworkPicker(sources, Number(configuration.chainId), () => busy || !!backup);
+const protocolPicker = setupProtocolPicker(configuration.chainName, () => busy || !!backup);
 const selected = () => assets.find(asset => asset.token === (el('funded-asset') as HTMLSelectElement).value);
 const format = (value: bigint, asset: FundingAsset) => asset.decimals === null || asset.decimals > 36
   ? `${value} base units (${asset.symbol})` : `${formatUnits(value, asset.decimals)} ${asset.symbol}`;
 function report(error: unknown) {el('error').textContent = error instanceof Error ? error.message : String(error); el('error').hidden = !error;}
 function render() {
-  picker.render();
+  picker.render(); protocolPicker.render();
+  renderReceiveSteps(!!backup, saved, spent, !!deposit, !!backup && !backup.multiAsset);
+  el('manual-deposit-note').hidden = !saved || configuration.mode === 'local';
   el('receive-form').hidden = !!backup; el('receive-details').hidden = !backup;
-  el('funding-instructions').hidden = !backup || !saved || spent;
+  el('funding-instructions').hidden = !backup || !saved || spent || !backup.multiAsset;
   el('detected-funds').hidden = assets.length === 0 && unreadable.length === 0;
   el('deposit-review').hidden = !deposit;
-  el('prepare-manual-relay').hidden = !backup || connected !== backup.config.relayer || spent;
+  el('prepare-manual-relay').hidden = !backup?.multiAsset || connected !== backup.config.relayer || spent;
   field('prepare-manual-relay').disabled = busy || !saved || !selected();
   field('relay-from-wallet').disabled = busy || !deposit || !saved || spent || connected !== backup?.config.relayer;
   field('recover-from-wallet').disabled = busy || !backup || connected !== backup.config.recovery;
@@ -45,7 +50,7 @@ function render() {
 }
 async function act(work: () => Promise<void>) {
   if (busy) return;
-  busy = true; report(''); picker.render();
+  busy = true; report(''); picker.render(); protocolPicker.render();
   for (const control of document.querySelectorAll<HTMLInputElement>('.railgun-card button, .railgun-card input, .railgun-card select, .railgun-card textarea')) control.disabled = true;
   try {await work();} catch (error) {report(error);} finally {
     busy = false;
@@ -61,10 +66,12 @@ function clearQuote() {
 async function refresh() {
   if (!record || !backup) return;
   await inspectRecovery(reader, backup, artifacts);
-  spent = await new Contract(deployment.executor, ['function spent(address) view returns(bool)'], reader).spent(record.address);
+  spent = await new Contract(record.executor, ['function spent(address) view returns(bool)'], reader).spent(record.address);
   const tip = await reader.getBlockNumber();
-  const fromBlock = scanBlock ?? record.fundingBlock!;
+  const fromBlock = scanBlock ?? record.fundingBlock ?? tip;
   // Keep previous token candidates when advancing the log cursor, including after recovery imports.
+  const recoveryAsset = field('recovery-asset').value.trim();
+  if (/^0x[\da-fA-F]{40}$/.test(recoveryAsset)) candidates = [...new Set([...candidates, getAddress(recoveryAsset)])];
   const found = await discoverFunding(reader, record, {fromBlock, toBlock: Math.min(tip, fromBlock + 19_999), tokens: candidates});
   scanBlock = Math.min(tip, found.nextBlock); candidates = [...new Set([...candidates, ...found.assets.map(asset => asset.token), ...found.unreadable])];
   const selector = el('funded-asset') as HTMLSelectElement, previous = selector.value;
@@ -82,7 +89,7 @@ async function refresh() {
   }
   if (deposit && (!selected() || selected()!.token !== (deposit.quote.native ? ZeroAddress : deposit.quote.token)
     || selected()!.balance !== deposit.quote.amount)) clearQuote();
-  el('balance-status').textContent = spent ? 'Pool deposit executed. Check your RAILGUN wallet for receipt and screening. Other funds remain recoverable.'
+  el('balance-status').textContent = !record.multiAsset ? 'Recovery restored. Recover ETH or enter a token contract address below.' : spent ? 'Pool deposit executed. Check your RAILGUN wallet for receipt and screening. Other funds remain recoverable.'
     : !scanComplete ? 'Checking earlier transfers… Keep this page open.' : assets.length ? 'Funds received. The operator reviews and completes this deposit.' : 'Waiting for ETH or tokens.';
   el('asset-review-status').textContent = found.unreadable.length ? `Unreadable token balances: ${found.unreadable.join(', ')}. You can enter their contract addresses for recovery.`
     : 'One asset is deposited per address. Other assets remain recoverable. Rebasing, lottery and taxed tokens are unsupported.';
@@ -94,11 +101,13 @@ async function ownerSigner() {
   return wallet.getSigner();
 }
 function showBackup(recipient: string) {
+  (el('receive-info') as HTMLDetailsElement).open = false;
   field('recovery-asset').value = ''; field('operator-gas-fee').value = '0'; approvedToken = undefined; field('review-standard-token').checked = false;
   el('recipient-summary').textContent = recipient;
   el('recovery-summary').textContent = `Recovery: ${backup!.config.recovery}`;
   el('receiving-address').textContent = backup!.depositAddress;
-  el('send-instructions').textContent = `Send ETH or a standard ERC-20 on ${configuration.chainName}. ETH is wrapped automatically. One private deposit per address; recover other or later funds. Excludes rebasing, lottery and taxed tokens. Arrange manual operator completion before funding.`;
+  showReceivingCode(backup!.depositAddress, Number(configuration.chainId), configuration.chainName);
+  el('send-instructions').textContent = `ETH or standard ERC-20s · One deposit per address.`;
   el('backup-status').textContent = saved ? 'Keep this recovery file private.' : 'Save your recovery file to reveal the funding address.';
   clearQuote();
 }
@@ -117,7 +126,11 @@ el('save-backup').addEventListener('click', () => void act(async () => {
   el('backup-status').textContent = 'Keep this recovery file private.';
 }));
 el('copy-address').addEventListener('click', () => void act(async () => {
-  if (backup && saved && !spent) await navigator.clipboard.writeText(backup.depositAddress);
+  if (backup && saved && !spent) {
+    await navigator.clipboard.writeText(backup.depositAddress);
+    el('copy-address').lastChild!.textContent = 'Copied';
+    setTimeout(() => {el('copy-address').lastChild!.textContent = 'Copy address';}, 1800);
+  }
 }));
 el('funded-asset').addEventListener('change', () => {clearQuote(); approvedToken = undefined; field('review-standard-token').checked = false; field('operator-gas-fee').value = '0';
   if (selected()) field('recovery-asset').value = selected()!.token === ZeroAddress ? 'ETH' : selected()!.token; render();});
@@ -153,7 +166,7 @@ el('prepare-manual-relay').addEventListener('click', () => void act(async () => 
   el('review-amount').textContent = format(funding.balance, funding); el('review-network').textContent = configuration.chainName;
   el('puddle-fee').textContent = format(serviceFee, funding); el('relay-fee').textContent = format(gasFee, funding);
   el('pool-fee').textContent = format(poolFee, funding); el('net-amount').textContent = format(poolAmount - poolFee, funding);
-  deposit = proposed;
+  deposit = proposed; (el('receive-info') as HTMLDetailsElement).open = true;
 }));
 el('relay-from-wallet').addEventListener('click', () => void act(async () => {
   if (!record || !deposit || !saved) throw new Error('Prepare an operator quote first.');
@@ -174,13 +187,14 @@ el('restore-backup').addEventListener('change', () => void act(async () => {
   const file = field('restore-backup').files?.[0]; if (!file) return;
   if (file.size > 16_384) throw new Error('Recovery file is too large.');
   const restored = parseRecoveryFile(await file.text());
-  if (!restored.multiAsset || restored.chainId !== configuration.chainId || restored.executor !== configuration.executor) throw new Error('This file belongs to another route.');
+  if (restored.chainId !== configuration.chainId || restored.factory !== configuration.factory || restored.implementation !== configuration.implementation
+    || restored.validator !== configuration.validator || restored.pool !== configuration.pool || restored.asset !== configuration.token
+    || restored.multiAsset && restored.executor !== configuration.executor) throw new Error('This file belongs to another route.');
   await inspectRecovery(reader, restored, artifacts); backup = restored; record = recoveryRecord(restored); saved = true; spent = false;
   candidates = []; scanBlock = undefined; showBackup('Recovery restored.'); await refresh();
 }));
 el('refresh-deposit').addEventListener('click', () => void act(refresh));
 el('new-receive').addEventListener('click', () => void act(async () => {
-  if (backup && !saved) throw new Error('Save recovery first.');
   record = undefined; backup = undefined; deposit = undefined; saved = false; spent = false; assets = []; unreadable = []; candidates = []; scanBlock = undefined;
   approvedToken = undefined; field('review-standard-token').checked = false;
   el('transaction-status').textContent = '';
@@ -188,10 +202,10 @@ el('new-receive').addEventListener('click', () => void act(async () => {
 el('amount-entry').hidden = true; field('send-amount').required = false;
 el('send-from-wallet').hidden = true; el('wallet-choice').hidden = true;
 el('asset-operator-tools').hidden = false; el('recover-from-wallet').textContent = 'Recover funds';
-el('manual-deposit-note').hidden = configuration.mode === 'local';
-el('route-description').textContent = `ETH and tokens on ${configuration.chainName}.`;
+el('manual-deposit-note').textContent = 'Arrange manual completion before sending.';
+el('route-description').textContent = 'ETH and tokens.';
 clearQuote(); render();
-setInterval(() => {if (backup && saved && !spent && !busy) void act(refresh);}, 15_000);
+setInterval(() => {if (backup && saved && !spent && !busy && !el('wallet-tools').contains(document.activeElement)) void act(refresh);}, 15_000);
 if (configuration.mode === 'local') {
   const demo = await (await fetch('/demo.json')).json(); field('private-recipient').value = demo.recipient; field('recovery-owner').value = demo.recovery;
   // Local faucet funds a known token; arbitrary tokens/ETH can also arrive from a normal wallet.
