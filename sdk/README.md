@@ -3,6 +3,10 @@
 Create receiving addresses, estimate fees and recover funds for RAILGUN deposits.
 Version `0.1.0-rc.1` is distributed as a repository build.
 
+Start with the [wallet and agent integration guide](https://puddle.link/docs/integrate/).
+It covers setup, receiving, manual completion and recovery. The API below is an SDK;
+Puddle does not operate a hosted REST service.
+
 Prepare an ordinary ERC-20 receiving account from a public RAILGUN address and
 recovery owner. The SDK runs in browsers and Node 24.12+, without recipient keys,
 setup signatures or the full wallet engine. Kernel supplies the account and factory;

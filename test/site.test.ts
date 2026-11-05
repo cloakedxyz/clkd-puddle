@@ -24,9 +24,10 @@ test('standalone landing page uses product copy and contains no deposit tooling 
   assert.doesNotMatch(html, /\{\{|localhost|127\.0\.0\.1|<form|\/api\/|0zk1|RAILGUN on Ethereum/);
   const files = await readdir(output, { recursive: true });
   assert.deepEqual(files.sort(), ['assets', 'assets/metamask.svg', 'assets/rabby.svg', 'assets/railgun.svg',
-    'assets/rainbow.svg', 'assets/chains', ...chainLogoFiles, 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs',
+    'assets/rainbow.svg', 'assets/chains', ...chainLogoFiles, 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs', 'llms.txt', 'llms-full.txt',
     ...documentation.flatMap(page => page.path === '/docs/' ? ['docs/index.html']
-      : [page.path.slice(1, -1), page.path.slice(1) + 'index.html'])].sort());
+      : [page.path.slice(1, -1), page.path.slice(1) + 'index.html']),
+    ...documentation.map(page => page.path === '/docs/' ? 'docs/index.md' : page.path.slice(1, -1) + '.md')].sort());
   for (const file of ['site.js', 'theme.js']) {
     assert.doesNotMatch(await readFile(new URL(file, output), 'utf8'), /\/api\/|fetch\(|XMLHttpRequest|JsonRpcProvider/);
   }
@@ -48,6 +49,15 @@ test('hosted API reference documents every public SDK export and links to the se
     if (page.source === 'docs/architecture.md') assert.match(content, /unmodified Kernel v3.3/);
     assert.doesNotMatch(content, /0zk1|privateKey\s*[:=]|https?:\/\/(?:localhost|127\.0\.0\.1)/);
   }
+  const index = await readFile(new URL('../dist/llms.txt', import.meta.url), 'utf8');
+  const full = await readFile(new URL('../dist/llms-full.txt', import.meta.url), 'utf8');
+  assert(index.includes('https://puddle.link/docs/integrate/'));
+  for (const name of names) assert(full.includes(name), `Missing agent-readable SDK entry: ${name}`);
+  for (const page of documentation) assert(full.includes('Canonical URL: https://puddle.link' + page.path));
+  const guide = await readFile(new URL('../dist/docs/integrate.md', import.meta.url), 'utf8');
+  assert(guide.includes('https://puddle.link/docs/api/#manual-relay'));
+  assert.match(guide, /Public REST service\s+\|\s+None\./);
+  assert.doesNotMatch(guide, /<html|<script/);
 });
 
 test('documentation renderer escapes raw HTML and rejects executable links', () => {

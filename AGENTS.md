@@ -1,5 +1,10 @@
 # Working on Puddle
 
+For integration into another product, start with `docs/integrate.md` and its
+copyable module. The website publishes `/llms.txt`, `/llms-full.txt` and Markdown
+copies of its docs. Keep interface availability accurate: the SDK is public source;
+there is no hosted REST service or automatic operator service.
+
 Puddle's selected architecture is **ZeroDev Kernel + RAILGUN**.
 Do not reintroduce a custom receiving account or factory.
 
@@ -11,6 +16,7 @@ Read `README.md`, `docs/architecture.md`, then `SECURITY.md`.
 - `contracts/KernelImports.sol`: imports unmodified upstream Kernel, factory and validator.
 - `sdk/`: browser/Node preparation, account checks, quotes and owner recovery.
 - `app/`: the single receiving/recovery interface.
+- `docs/integrate.md`: wallet/agent integration recipe, checked against the packed SDK.
 - `deployments/arbitrum.json`: reviewed public route pins and runtime templates for the manual website preview; no personal accounts or recipient data.
 - `scripts/railgun-app.ts`: localhost demo/pilot server; no production keys.
 - `scripts/plan-live.ts`: read-only public preflight and isolated-fork pilot planning; never sends live transactions.

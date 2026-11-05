@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, posix } from 'node:path';
 import { brand } from './brand.ts';
-import { escapeHTML, revisionBadge } from './html.ts';
+import { escapeHTML, revisionBadge, buildRevision } from './html.ts';
 
 export const documentation = [
   {source: 'docs/index.md', path: '/docs/', label: 'Start here'},
   {source: 'docs/recovery.md', path: '/docs/recovery/', label: 'Recovery'},
+  {source: 'docs/integrate.md', path: '/docs/integrate/', label: 'Integrate Puddle'},
   {source: 'docs/api.md', path: '/docs/api/', label: 'SDK API reference'},
   {source: 'docs/architecture.md', path: '/docs/architecture/', label: 'Architecture'},
   {source: 'docs/bridges.md', path: '/docs/bridges/', label: 'Relay quotes'},
@@ -13,23 +14,57 @@ export const documentation = [
 ];
 const anchor = (text: string) => text.toLowerCase().replace(/[`*]/g, '').replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-');
 
+function documentationHref(value: string, source: string) {
+  if (/^(?:https?:|mailto:|#)/.test(value)) return value;
+  if (/^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')) return '#';
+  const [file, fragment] = value.split('#');
+  const path = posix.normalize(posix.join(dirname(source), file));
+  const page = documentation.find(page => page.source === path);
+  return (page?.path ?? `${brand.repository}/blob/main/${path}`) + (fragment ? '#' + fragment : '');
+}
+
+/** Generate agent-readable copies from the same sources as the human docs. */
+export async function machineDocumentation() {
+  const origin = 'https://puddle.link';
+  const {commit, modified} = buildRevision();
+  const sourceRef = commit ?? 'main';
+  const files = new Map<string, [string, string]>();
+  const sections: string[] = [];
+  for (const page of documentation) {
+    let fence = false;
+    const markdown = (await readFile(page.source, 'utf8')).split('\n').map(line => {
+      if (line.startsWith('```')) fence = !fence;
+      if (fence || line.startsWith('```')) return line;
+      return line.replace(/(\[[^\]]+\]\()([^\s)]+)(\))/g, (_, before: string, value: string, after: string) => {
+        const href = documentationHref(value, page.source);
+        const absolute = href.startsWith('#') ? origin + page.path + href : href.startsWith('/') ? origin + href : href;
+        return before + absolute.replace(`${brand.repository}/blob/main/`, `${brand.repository}/blob/${sourceRef}/`) + after;
+      });
+    }).join('\n');
+    const path = page.path === '/docs/' ? '/docs/index.md' : page.path.slice(0, -1) + '.md';
+    files.set(path, [markdown, 'text/markdown; charset=utf-8']);
+    sections.push(`Canonical URL: ${origin}${page.path}\n\n${markdown}`);
+  }
+  const index = `# Puddle\n\n> Receive ordinary token transfers into a RAILGUN private wallet using the Puddle SDK.\n\n`
+    + `Start with [Integrate Puddle](${origin}/docs/integrate/). It describes installation, the current interfaces, manual completion and owner recovery.\n\n`
+    + `Read [all documentation as plain text](${origin}/llms-full.txt), or use the Markdown copies below.\n\n## Documentation\n\n`
+    + documentation.map(page => `- [${page.label}](${origin}${page.path === '/docs/' ? '/docs/index.md' : page.path.slice(0, -1) + '.md'})`).join('\n')
+    + `\n\n## Source\n\nSource revision: ${commit ?? 'unavailable'}${modified ? ' (includes local changes)' : ''}.\n\n`
+    + `- [Repository](${brand.repository}/tree/${sourceRef})\n- [SDK and runnable example](${brand.repository}/tree/${sourceRef}/sdk)\n`;
+  files.set('/llms.txt', [index, 'text/plain; charset=utf-8']);
+  files.set('/llms-full.txt', [index + '\n\n---\n\n' + sections.join('\n\n---\n\n'), 'text/plain; charset=utf-8']);
+  return files;
+}
+
 /** Small renderer for the repository's trusted Markdown. Raw HTML is always escaped. */
 export function renderMarkdown(markdown: string, source: string) {
-  function href(value: string) {
-    if (/^(?:https?:|mailto:|#)/.test(value)) return value;
-    if (/^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')) return '#';
-    const [file, fragment] = value.split('#');
-    const path = posix.normalize(posix.join(dirname(source), file));
-    const page = documentation.find(page => page.source === path);
-    return (page?.path ?? `${brand.repository}/blob/main/${path}`) + (fragment ? '#' + fragment : '');
-  }
   function inline(text: string): string {
     const tokens = /`([^`]+)`|\[([^\]]+)\]\(([^\s)]+)\)|\*\*([^*]+)\*\*/g;
     let output = '', end = 0;
     for (const match of text.matchAll(tokens)) {
       output += escapeHTML(text.slice(end, match.index));
       if (match[1] !== undefined) output += `<code>${escapeHTML(match[1])}</code>`;
-      else if (match[2] !== undefined) output += `<a href="${escapeHTML(href(match[3]))}">${inline(match[2])}</a>`;
+      else if (match[2] !== undefined) output += `<a href="${escapeHTML(documentationHref(match[3], source))}">${inline(match[2])}</a>`;
       else output += `<strong>${escapeHTML(match[4])}</strong>`;
       end = match.index! + match[0].length;
     }
@@ -81,7 +116,7 @@ export async function renderDocumentation(page: typeof documentation[number]) {
   const links = documentation.map(link => `<a href="${link.path}"${link.path === page.path ? ' aria-current="page"' : ''}>${escapeHTML(link.label)}</a>`).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#fafaf9"><title>${escapeHTML(title)} — ${escapeHTML(brand.name)}</title>
-<script src="/theme.js"></script><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/docs.css"></head>
+<script src="/theme.js"></script><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/docs.css"><link rel="alternate" type="text/plain" href="/llms.txt" title="Agent documentation"></head>
 <body class="docs"><a class="skip-link" href="#content">Skip to content</a><div class="docs-shell">
 <header class="docs-header"><a class="brand" href="/">${escapeHTML(brand.name)}</a><nav aria-label="Website"><a href="/">App</a><a href="${escapeHTML(brand.repository)}">GitHub</a>
 <button type="button" data-theme-choice="light" aria-label="Light mode">Light</button><button type="button" data-theme-choice="dark" aria-label="Dark mode">Dark</button></nav></header>

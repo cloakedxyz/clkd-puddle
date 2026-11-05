@@ -16,7 +16,7 @@ import { brand } from './brand.ts';
 import { openRelayWorker } from './relay-worker.ts';
 import type { RelayWorker } from './relay-worker.ts';
 import { chainLogoFiles } from '../app/networks.ts';
-import { documentation, renderDocumentation } from './docs.ts';
+import { documentation, renderDocumentation, machineDocumentation } from './docs.ts';
 
 export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5177,
   demo?: { recipient: string; recovery: string; amount?: string; action: (kind: string, file: RecoveryFile, amount: bigint) => Promise<string> },
@@ -52,6 +52,7 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
     const rendered: [string, string] = [await renderDocumentation(page), 'text/html'];
     files.set(page.path, rendered); files.set(page.path.slice(0, -1), rendered);
   }
+  for (const [path, file] of await machineDocumentation()) files.set(path, file);
   for (const output of bundle.outputFiles) files.set('/' + output.path.split('/').at(-1), [output.contents, 'text/javascript']);
   for (const asset of ['metamask', 'rainbow', 'rabby', 'railgun']) {
     files.set(`/assets/${asset}.svg`, [await readFile(`app/assets/${asset}.svg`), 'image/svg+xml']);

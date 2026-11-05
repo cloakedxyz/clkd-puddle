@@ -11,6 +11,10 @@ The website receives WETH on Arbitrum One. An operator completes each private
 deposit; coordinate before sending funds. The SDK is distributed as a repository
 build.
 
+For wallet teams and implementation agents, start with [Integrate Puddle](docs/integrate.md).
+The guide covers the SDK, manual completion, recovery and the current HTTP interfaces.
+Machine-readable documentation is available at [puddle.link/llms.txt](https://puddle.link/llms.txt).
+
 ## Run
 
 Requires Node.js 24.12+, npm, Git and Foundry 1.7.1.

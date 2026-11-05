@@ -31,7 +31,7 @@ function git(...args: string[]): string | undefined {
 }
 
 // Capture the source revision during the build, including source archives without Git.
-export function revisionBadge(className = '') {
+export function buildRevision() {
   const archiveCommit = process.env.BUILD_COMMIT ?? process.env.VERCEL_GIT_COMMIT_SHA;
   const commit = archiveCommit ?? git('rev-parse', '--verify', 'HEAD');
   if (commit !== undefined && !/^[a-f0-9]{40}$/i.test(commit)) throw new Error('BUILD_COMMIT must be a full Git commit hash.');
@@ -39,6 +39,11 @@ export function revisionBadge(className = '') {
   // Vercel may modify build files after checking out its immutable source commit.
   const modified = process.env.VERCEL === '1' && archiveCommit ? false
     : status === undefined ? !archiveCommit : status.length > 0;
+  return {commit, modified};
+}
+
+export function revisionBadge(className = '') {
+  const {commit, modified} = buildRevision();
   const label = commit ? `${commit.slice(0, 7)}${modified ? ' · dev' : ''}` : 'dev';
   const title = commit ? `Source commit ${commit}${modified ? ' — includes local changes' : ''}` : 'Development build — source revision unavailable';
   const attributes = `class="${escapeHTML(className)}" title="${escapeHTML(title)}"`;
