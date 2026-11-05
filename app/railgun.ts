@@ -6,6 +6,8 @@ import type { DepositExecution, RecoveryArtifacts, RecoveryFile } from '../sdk/i
 import { validateRailgunSiteConfiguration, siteDeployment } from './configuration.ts';
 import { minimumMatchingAssetOutput, validateRelayFundingQuote } from '../sdk/relay.ts';
 import type { RelayFundingQuote } from '../sdk/relay.ts';
+import {showReceivingCode} from './receive-card.ts';
+import {setupProtocolPicker} from './protocols.ts';
 import { setupNetworkPicker } from './networks.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => {
@@ -43,6 +45,7 @@ for (const origin of configuration.bridgeOrigins ?? []) {
 }
 sources.options[0].textContent = configuration.chainName;
 const networkPicker = setupNetworkPicker(sources, Number(configuration.chainId), () => busy || !!backup);
+const protocolPicker = setupProtocolPicker(configuration.chainName, () => busy || !!backup);
 const providers = new Map<string, Eip1193Provider>();
 const wallets = el<HTMLSelectElement>('wallet-choice');
 
@@ -51,7 +54,9 @@ function report(error: unknown) {
   el('error').hidden = !error;
 }
 function render() {
-  networkPicker.render();
+  networkPicker.render(); protocolPicker.render();
+  el('save-recovery-gate').hidden = true;
+  el<HTMLDetailsElement>('receive-info').open = true;
   const staleBridge = !!bridge && Date.now() - bridgePreparedAt > 90000 && remaining === 0n && !spent;
   el('receive-form').hidden = !!backup;
   el('receive-details').hidden = !backup;
@@ -73,7 +78,7 @@ function render() {
 async function act(work: () => Promise<void>) {
   if (busy) return;
   busy = true; report('');
-  networkPicker.render();
+  networkPicker.render(); protocolPicker.render();
   for (const button of document.querySelectorAll<HTMLButtonElement>('.railgun-card button')) button.disabled = true;
   for (const control of document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.railgun-card input, .railgun-card select, .railgun-card textarea')) control.disabled = true;
   wallets.disabled = true;
@@ -156,6 +161,8 @@ function showBackup() {
   el('deposit-review').hidden = !deposit;
   el('review-network').textContent = configuration.bridgeOrigins?.find(source => source.chainId === bridge?.originChainId)?.chainName ?? configuration.chainName;
   el('receiving-address').textContent = bridge?.depositAddress ?? backup.depositAddress;
+  showReceivingCode(bridge?.depositAddress ?? backup.depositAddress, bridge ? bridge.originChainId : Number(configuration.chainId),
+    configuration.bridgeOrigins?.find(source => source.chainId === bridge?.originChainId)?.chainName ?? configuration.chainName);
   el('recovery-summary').textContent = `Recovery: ${backup.config.recovery}`;
   const origin = configuration.bridgeOrigins?.find(source => source.chainId === bridge?.originChainId);
   el('send-instructions').textContent = bridge && origin

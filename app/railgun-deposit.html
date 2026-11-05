@@ -1,8 +1,9 @@
 <div class="demo-card railgun-card">
-  <h2>Fund your private wallet.</h2>
+  <h2 id="receive-title">Receive privately</h2>
   <div class="receive-heading">
-    <p class="description" id="route-description">Checking the deposit route…</p>
+    <p class="visually-hidden" id="route-description">Checking the deposit route…</p>
     <div class="network-picker" id="network-picker">
+      <span class="picker-label">From</span>
       <button type="button" class="chain-menu-toggle" id="chain-menu-toggle" aria-expanded="false" aria-controls="chain-menu" aria-label="Choose funding network" disabled>
         <img class="chain-logo" id="selected-chain-logo" width="20" height="20" alt="" hidden>
         <span id="selected-chain-name">Select network</span>
@@ -12,6 +13,16 @@
       <label class="visually-hidden" for="source-chain">Fund from</label>
       <select id="source-chain" aria-label="Fund from" aria-hidden="true" tabindex="-1" hidden><option value="">Same chain</option></select>
     </div>
+    <div class="protocol-picker" id="protocol-picker">
+      <span class="picker-label">Receive in</span>
+      <button type="button" class="chain-menu-toggle" id="protocol-menu-toggle" aria-expanded="false" aria-controls="protocol-menu" aria-label="Choose privacy protocol" disabled>
+        <img class="protocol-logo" src="/assets/protocols/railgun.png" width="22" height="22" alt="">
+        <span class="destination-choice"><span>RAILGUN</span><small id="destination-chain"></small></span>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </button>
+      <div class="chain-menu protocol-menu" id="protocol-menu" role="group" aria-label="Privacy protocols" hidden><p class="picker-title">Privacy protocol</p></div>
+    </div>
+
   </div>
   <div class="notice" id="error" role="alert" hidden></div>
   <form id="receive-form">
@@ -22,8 +33,8 @@
     <div class="form-field">
       <label class="field-label" for="recovery-owner">Recovery wallet</label>
       <input class="text-input" id="recovery-owner" spellcheck="false" autocomplete="off" placeholder="0x…" aria-describedby="recovery-hint" required>
-      <p class="form-hint" id="recovery-hint">Use a wallet you control.</p>
     </div>
+    <p class="form-hint" id="recovery-hint">Use a recovery wallet you control.</p>
     <div class="amount-box" id="amount-entry"><label class="field-label" for="send-amount">Amount to send</label>
       <div class="amount-field"><input id="send-amount" inputmode="decimal" autocomplete="off" placeholder="0.0" required><span class="asset-badge" id="asset-symbol"></span></div>
     </div>
@@ -36,6 +47,31 @@
       <span class="form-hint" id="review-network"></span>
     </div>
     <p class="process-note" id="manual-deposit-note" hidden>An operator completes your private deposit. Arrange this before sending funds.</p>
+    <div id="save-recovery-gate"><div class="recovery-emblem"><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#shield-check"/></svg></div><p class="recovery-explanation">Save your recovery file to keep control of funds before they reach your private wallet.</p></div>
+    <button class="primary icon-button" type="button" id="save-backup"><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#download"/></svg><span id="save-backup-label">Save &amp; show address</span></button>
+    <button class="secondary" type="button" id="save-bridge" hidden>Save bridge details</button>
+    <p class="button-note" id="bridge-note" hidden></p>
+    <p id="backup-status" class="button-note">Save your recovery file to reveal the funding address.</p>
+    <div id="funding-instructions" hidden>
+      <div class="funding-network"><img id="funding-chain-logo" class="chain-logo" width="20" height="20" alt=""><span id="funding-network-label"></span></div>
+      <div id="receiving-qr" class="receiving-qr" role="img" aria-label="Receiving address QR code"></div>
+      <code id="receiving-address" class="railgun-address"></code>
+      <button class="primary icon-button" type="button" id="copy-address"><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#copy"/></svg>Copy address</button>
+      <p id="send-instructions" class="button-note"></p>
+    </div>
+    <p id="balance-status" role="status" aria-live="polite"></p>
+    <p id="automatic-status" role="status" class="button-note" hidden></p>
+    <div id="demo-actions" hidden>
+      <button class="primary" type="button" id="demo-fund">Send test tokens</button>
+      <button class="primary" type="button" id="demo-relay">Relay test deposit</button>
+    </div>
+    <button class="secondary icon-button" type="button" id="refresh-deposit"><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#rotate-ccw"/></svg>Check deposit</button>
+    <section id="detected-funds" hidden aria-label="Received assets">
+      <label class="field-label" for="funded-asset">Received funds</label>
+      <select class="text-input" id="funded-asset"></select>
+      <p class="form-hint" id="asset-review-status"></p>
+    </section>
+    <details id="receive-info" class="receive-info"><summary><span><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#info"/></svg> Deposit details</span><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#chevron-down"/></svg></summary>
     <p id="recipient-summary" class="button-note"></p>
     <p id="recovery-summary" class="button-note"></p>
     <details class="fees" open><summary>Fees</summary>
@@ -47,28 +83,9 @@
     </details>
     <p class="button-note">The operator can change the gas charge up to the displayed limit.</p>
     <div class="total"><span id="net-label">Expected private balance</span><strong id="net-amount"></strong></div>
-    <button class="secondary" type="button" id="save-backup">Save recovery file</button>
-    <button class="secondary" type="button" id="save-bridge" hidden>Save bridge details</button>
-    <p class="button-note" id="bridge-note" hidden></p>
-    <p id="backup-status" class="button-note">Save your recovery file to reveal the funding address.</p>
-    <div id="funding-instructions" hidden>
-      <span class="field-label">Send to this address</span><code id="receiving-address" class="railgun-address"></code>
-      <button class="secondary" type="button" id="copy-address">Copy address</button>
-      <p id="send-instructions" class="button-note"></p>
-    </div>
-    <p id="balance-status" role="status" aria-live="polite"></p>
-    <p id="automatic-status" role="status" class="button-note" hidden></p>
-    <div id="demo-actions" hidden>
-      <button class="primary" type="button" id="demo-fund">Send test tokens</button>
-      <button class="primary" type="button" id="demo-relay">Relay test deposit</button>
-    </div>
-    <button class="secondary" type="button" id="refresh-deposit">Check deposit</button>
-    <section id="detected-funds" hidden aria-label="Received assets">
-      <label class="field-label" for="funded-asset">Received funds</label>
-      <select class="text-input" id="funded-asset"></select>
-      <p class="form-hint" id="asset-review-status"></p>
-    </section>
-    <details id="wallet-tools"><summary>Wallet actions</summary>
+    <div id="saved-recovery-action"></div>
+    </details>
+    <details id="wallet-tools"><summary><span><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#wallet"/></svg> Wallet actions</span><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#chevron-down"/></svg></summary>
       <p class="button-note">Send with your wallet, relay with the configured operator wallet, or recover with the recovery wallet. Your keys stay in your wallet.</p>
       <label for="wallet-choice" class="field-label">Wallet</label><select id="wallet-choice"><option value="">Browser wallet</option></select>
       <button class="secondary" type="button" id="connect-wallet">Connect wallet</button>
@@ -86,7 +103,7 @@
       <button class="secondary" type="button" id="recover-from-wallet" disabled>Recover remaining tokens</button>
     </details>
     <p id="transaction-status" role="status" class="button-note"></p>
-    <p class="button-note">Check your RAILGUN wallet for receipt and screening status. Initial transfers are public. After shielding, your RAILGUN wallet controls the private balance.</p>
+
     <button class="secondary" type="button" id="new-receive">Create another address</button>
   </section>
   <details class="restore-panel">

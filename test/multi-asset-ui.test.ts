@@ -3,6 +3,8 @@ import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {Contract, ContractFactory, parseEther, keccak256} from 'ethers';
 import {chromium} from 'playwright';
+import {createRequire} from 'node:module';
+const jsQR: typeof import('jsqr').default = createRequire(import.meta.url)('jsqr');
 import {startRailgunDemo} from '../scripts/railgun-app.ts';
 import {decryptDeposit, fund} from './helpers.ts';
 import {parseRecoveryFile, createRailgunAdapter, createRecoveryFile, inspectRecovery} from '../sdk/index.ts';
@@ -24,16 +26,53 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
     await page.goto(app.url);
     await page.waitForFunction(() => !!document.querySelector<HTMLInputElement>('#private-recipient')?.value);
     assert.equal(await page.locator('#amount-entry').isVisible(), false);
+    await page.locator('#protocol-menu-toggle').click();
+    assert.equal(await page.locator('#protocol-option-railgun').isEnabled(), true);
+    for (const id of ['privacy-pools-v1', 'privacy-pools-v2']) {
+      assert.equal(await page.locator('#protocol-option-' + id).isDisabled(), true);
+      assert((await page.locator('#protocol-option-' + id).innerText()).includes('Coming soon'));
+    }
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#protocol-menu').isVisible(), false);
+    await page.locator('#protocol-menu-toggle').click(); await page.locator('#chain-menu-toggle').click();
+    assert.equal(await page.locator('#protocol-menu').isVisible(), false);
+    await page.keyboard.press('Escape');
+    await page.locator('h2').click();
+    await page.screenshot({path: '.cache/puddle-receive-mobile-light.png', fullPage: true, animations: 'disabled'});
+    await page.locator('#menu-toggle').click(); await page.locator('#site-menu [data-theme-choice="dark"]').click();
+    await page.locator('#menu-toggle').click();
+    await page.screenshot({path: '.cache/puddle-receive-mobile-dark.png', fullPage: true, animations: 'disabled'});
+    await page.locator('#protocol-menu-toggle').click();
+    await page.screenshot({path: '.cache/puddle-protocol-menu-dark.png', fullPage: true, animations: 'disabled'});
+    await page.keyboard.press('Escape');
     assert((await page.locator('#route-description').innerText()).includes('ETH and tokens'));
     for (const native of [true, false]) {
       if (!native) await page.locator('#new-receive').click();
       await page.locator('#prepare').click();
       await page.locator('#receive-details').waitFor({state: 'visible'});
+      assert.equal(await page.locator('#protocol-menu-toggle').isDisabled(), true);
       assert.equal(await page.locator('#funding-instructions').isVisible(), false);
+      assert.equal(await page.locator('#receive-info').isVisible(), false);
+      await page.screenshot({path: '.cache/puddle-save-recovery-dark.png', fullPage: true, animations: 'disabled'});
       const download = page.waitForEvent('download'); await page.locator('#save-backup').click();
       const path = await (await download).path(); assert(path);
       const recovery = parseRecoveryFile(await readFile(path, 'utf8'));
       await page.locator('#funding-instructions').waitFor({state: 'visible'});
+      assert.equal(await page.locator('.receive-heading').isVisible(), false);
+      assert.equal(await page.locator('#receive-info').getAttribute('open'), null);
+      assert.equal(await page.locator('#receiving-address').innerText(), recovery.depositAddress);
+      const pixels = await page.locator('#receiving-qr svg').evaluate(async svg => {
+        const image = new Image(); const url = 'data:image/svg+xml;base64,' + btoa(new XMLSerializer().serializeToString(svg));
+        try {
+          image.src = url; await image.decode();
+          const canvas = document.createElement('canvas'); canvas.width = canvas.height = 240;
+          const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0, 240, 240);
+          return Array.from(context.getImageData(0, 0, 240, 240).data);
+        } finally {image.remove();}
+      });
+      assert.equal(jsQR(new Uint8ClampedArray(pixels), 240, 240)?.data, recovery.depositAddress);
+      await page.screenshot({path: '.cache/puddle-receive-address-dark.png', fullPage: true, animations: 'disabled'});
+
       let amount: bigint, token: Contract | undefined, proxy: Contract | undefined;
       if (native) {
         amount = parseEther('0.01'); await (await app.env.sender.sendTransaction({to: recovery.depositAddress, value: amount})).wait();
@@ -61,7 +100,7 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
         await page.locator('#prepare-manual-relay').click();
       }
       await page.locator('#deposit-review').waitFor({state: 'visible'});
-      await page.screenshot({path: `.cache/multi-asset-${native ? 'eth' : 'erc20'}-review.png`, fullPage: true});
+      await page.screenshot({path: `.cache/multi-asset-${native ? 'eth' : 'erc20'}-review.png`, fullPage: true, animations: 'disabled'});
       if (proxy) {
         const replacementArtifact = app.env.contracts['test/contracts/DemoToken.sol'].Demo18Token;
         const replacement = await new ContractFactory(replacementArtifact.abi, replacementArtifact.evm.bytecode.object, app.env.deployer).deploy(); await replacement.waitForDeployment();
@@ -85,6 +124,7 @@ test('flexible browser flow requires only two addresses, detects ETH and ERC-20s
         account = await app.env.recovery.getAddress(); await page.reload();
         await page.locator('#restore-backup').setInputFiles(path);
         await page.locator('#receive-details').waitFor({state: 'visible'});
+      assert.equal(await page.locator('#protocol-menu-toggle').isDisabled(), true);
         await page.locator('#wallet-tools').evaluate(element => {(element as HTMLDetailsElement).open = true;});
         await page.locator('#connect-wallet').click(); await page.locator('#recovery-asset').fill('ETH');
         await page.locator('#recover-from-wallet').click();

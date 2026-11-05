@@ -13,6 +13,7 @@ import { createEnvironment, createRecipient, decryptDeposit, fund } from './help
 import { parseRecoveryFile } from '../sdk/index.ts';
 import type { RailgunSiteConfiguration } from '../app/configuration.ts';
 import { chainLogoFiles } from '../app/networks.ts';
+import {protocolLogoFiles} from '../app/protocols.ts';
 
 test('standalone landing page uses product copy and contains no deposit tooling or private data', async () => {
   const output = new URL('../dist/', import.meta.url);
@@ -23,8 +24,8 @@ test('standalone landing page uses product copy and contains no deposit tooling 
   assert.doesNotMatch(html, /Coming soon|Developer preview/);
   assert.doesNotMatch(html, /\{\{|localhost|127\.0\.0\.1|<form|\/api\/|0zk1|RAILGUN on Ethereum/);
   const files = await readdir(output, { recursive: true });
-  assert.deepEqual(files.sort(), ['assets', 'assets/metamask.svg', 'assets/rabby.svg', 'assets/railgun.svg',
-    'assets/rainbow.svg', 'assets/chains', ...chainLogoFiles, 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs', 'llms.txt', 'llms-full.txt',
+  assert.deepEqual(files.sort(), ['assets', 'assets/lucide.svg', 'assets/Lucide-LICENSE', 'assets/QRCode-LICENSE', 'assets/metamask.svg', 'assets/rabby.svg', 'assets/railgun.svg',
+    'assets/rainbow.svg', 'assets/chains', ...chainLogoFiles, 'assets/protocols', ...protocolLogoFiles, 'index.html', 'site.js', 'style.css', 'docs.css', 'theme.js', 'docs', 'llms.txt', 'llms-full.txt',
     ...documentation.flatMap(page => page.path === '/docs/' ? ['docs/index.html']
       : [page.path.slice(1, -1), page.path.slice(1) + 'index.html']),
     ...documentation.map(page => page.path === '/docs/' ? 'docs/index.md' : page.path.slice(1, -1) + '.md')].sort());

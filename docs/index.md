@@ -1,6 +1,6 @@
 # Receive privately
 
-Puddle turns a normal token transfer into a deposit in your RAILGUN private wallet.
+Puddle turns a normal transfer into a private balance.
 Create a receiving address, send from your usual wallet and receive privately.
 
 Send **ETH or a standard ERC-20 on Arbitrum One**. Puddle detects the token and
@@ -8,9 +8,11 @@ amount after funding. ETH is wrapped automatically before the private deposit.
 
 ## Create your address
 
-1. Enter your RAILGUN address and a recovery wallet you control.
-2. Save your recovery file to reveal the receiving address.
-3. Send ETH or a supported token from your usual wallet.
+1. Choose where you send from and where you receive privately.
+   RAILGUN is available on Arbitrum One.
+2. Enter your RAILGUN address and a recovery wallet you control.
+3. Choose **Save & show address**. Keep the downloaded recovery file private.
+4. Copy the address or scan its QR code, then send on the displayed network.
 
 You only enter the two addresses. Choose the network, then send the token and amount
 you want to receive privately.

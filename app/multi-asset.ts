@@ -4,6 +4,8 @@ import {prepareFlexibleReceive, discoverFunding, quoteFunding, createRailgunAdap
   inspectRecovery, recoveryRecord, parseRecoveryFile, recoveryTransaction, relayDeposit, mined} from '../sdk/index.ts';
 import type {DepositRecord, DepositExecution, RecoveryFile, RecoveryArtifacts, FundingAsset, TokenApproval} from '../sdk/index.ts';
 import {siteDeployment, validateRailgunSiteConfiguration} from './configuration.ts';
+import {renderReceiveSteps, showReceivingCode} from './receive-card.ts';
+import {setupProtocolPicker} from './protocols.ts';
 import {setupNetworkPicker} from './networks.ts';
 
 const el = (id: string) => document.getElementById(id)!;
@@ -24,12 +26,15 @@ let approvedToken: TokenApproval | undefined;
 let scanComplete = true;
 let wallet: BrowserProvider | undefined, connected: string | undefined;
 const picker = setupNetworkPicker(sources, Number(configuration.chainId), () => busy || !!backup);
+const protocolPicker = setupProtocolPicker(configuration.chainName, () => busy || !!backup);
 const selected = () => assets.find(asset => asset.token === (el('funded-asset') as HTMLSelectElement).value);
 const format = (value: bigint, asset: FundingAsset) => asset.decimals === null || asset.decimals > 36
   ? `${value} base units (${asset.symbol})` : `${formatUnits(value, asset.decimals)} ${asset.symbol}`;
 function report(error: unknown) {el('error').textContent = error instanceof Error ? error.message : String(error); el('error').hidden = !error;}
 function render() {
-  picker.render();
+  picker.render(); protocolPicker.render();
+  renderReceiveSteps(!!backup, saved, spent, !!deposit, !!backup && !backup.multiAsset);
+  el('manual-deposit-note').hidden = !saved || configuration.mode === 'local';
   el('receive-form').hidden = !!backup; el('receive-details').hidden = !backup;
   el('funding-instructions').hidden = !backup || !saved || spent || !backup.multiAsset;
   el('detected-funds').hidden = assets.length === 0 && unreadable.length === 0;
@@ -45,7 +50,7 @@ function render() {
 }
 async function act(work: () => Promise<void>) {
   if (busy) return;
-  busy = true; report(''); picker.render();
+  busy = true; report(''); picker.render(); protocolPicker.render();
   for (const control of document.querySelectorAll<HTMLInputElement>('.railgun-card button, .railgun-card input, .railgun-card select, .railgun-card textarea')) control.disabled = true;
   try {await work();} catch (error) {report(error);} finally {
     busy = false;
@@ -100,7 +105,8 @@ function showBackup(recipient: string) {
   el('recipient-summary').textContent = recipient;
   el('recovery-summary').textContent = `Recovery: ${backup!.config.recovery}`;
   el('receiving-address').textContent = backup!.depositAddress;
-  el('send-instructions').textContent = `Send ETH or a standard ERC-20 on ${configuration.chainName}. ETH is wrapped automatically. One private deposit per address; recover other or later funds. Excludes rebasing, lottery and taxed tokens. Arrange manual operator completion before funding.`;
+  showReceivingCode(backup!.depositAddress, Number(configuration.chainId), configuration.chainName);
+  el('send-instructions').textContent = `ETH or standard ERC-20s · One deposit per address.`;
   el('backup-status').textContent = saved ? 'Keep this recovery file private.' : 'Save your recovery file to reveal the funding address.';
   clearQuote();
 }
@@ -119,7 +125,11 @@ el('save-backup').addEventListener('click', () => void act(async () => {
   el('backup-status').textContent = 'Keep this recovery file private.';
 }));
 el('copy-address').addEventListener('click', () => void act(async () => {
-  if (backup && saved && !spent) await navigator.clipboard.writeText(backup.depositAddress);
+  if (backup && saved && !spent) {
+    await navigator.clipboard.writeText(backup.depositAddress);
+    el('copy-address').lastChild!.textContent = 'Copied';
+    setTimeout(() => {el('copy-address').lastChild!.textContent = 'Copy address';}, 1800);
+  }
 }));
 el('funded-asset').addEventListener('change', () => {clearQuote(); approvedToken = undefined; field('review-standard-token').checked = false; field('operator-gas-fee').value = '0';
   if (selected()) field('recovery-asset').value = selected()!.token === ZeroAddress ? 'ETH' : selected()!.token; render();});
@@ -155,7 +165,7 @@ el('prepare-manual-relay').addEventListener('click', () => void act(async () => 
   el('review-amount').textContent = format(funding.balance, funding); el('review-network').textContent = configuration.chainName;
   el('puddle-fee').textContent = format(serviceFee, funding); el('relay-fee').textContent = format(gasFee, funding);
   el('pool-fee').textContent = format(poolFee, funding); el('net-amount').textContent = format(poolAmount - poolFee, funding);
-  deposit = proposed;
+  deposit = proposed; (el('receive-info') as HTMLDetailsElement).open = true;
 }));
 el('relay-from-wallet').addEventListener('click', () => void act(async () => {
   if (!record || !deposit || !saved) throw new Error('Prepare an operator quote first.');
@@ -192,10 +202,10 @@ el('new-receive').addEventListener('click', () => void act(async () => {
 el('amount-entry').hidden = true; field('send-amount').required = false;
 el('send-from-wallet').hidden = true; el('wallet-choice').hidden = true;
 el('asset-operator-tools').hidden = false; el('recover-from-wallet').textContent = 'Recover funds';
-el('manual-deposit-note').hidden = configuration.mode === 'local';
+el('manual-deposit-note').textContent = 'Arrange manual completion before sending.';
 el('route-description').textContent = 'ETH and tokens.';
 clearQuote(); render();
-setInterval(() => {if (backup && saved && !spent && !busy) void act(refresh);}, 15_000);
+setInterval(() => {if (backup && saved && !spent && !busy && !el('wallet-tools').contains(document.activeElement)) void act(refresh);}, 15_000);
 if (configuration.mode === 'local') {
   const demo = await (await fetch('/demo.json')).json(); field('private-recipient').value = demo.recipient; field('recovery-owner').value = demo.recovery;
   // Local faucet funds a known token; arbitrary tokens/ETH can also arrive from a normal wallet.

@@ -16,6 +16,7 @@ import { brand } from './brand.ts';
 import { openRelayWorker } from './relay-worker.ts';
 import type { RelayWorker } from './relay-worker.ts';
 import { chainLogoFiles } from '../app/networks.ts';
+import {protocolLogoFiles} from '../app/protocols.ts';
 import { documentation, renderDocumentation, machineDocumentation } from './docs.ts';
 
 export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5177,
@@ -54,10 +55,10 @@ export async function startRailgunSite(input: RailgunSiteConfiguration, port = 5
   }
   for (const [path, file] of await machineDocumentation()) files.set(path, file);
   for (const output of bundle.outputFiles) files.set('/' + output.path.split('/').at(-1), [output.contents, 'text/javascript']);
-  for (const asset of ['metamask', 'rainbow', 'rabby', 'railgun']) {
+  for (const asset of ['metamask', 'rainbow', 'rabby', 'railgun', 'lucide']) {
     files.set(`/assets/${asset}.svg`, [await readFile(`app/assets/${asset}.svg`), 'image/svg+xml']);
   }
-  for (const asset of chainLogoFiles) files.set('/' + asset, [await readFile('app/' + asset), 'image/png']);
+  for (const asset of [...chainLogoFiles, ...protocolLogoFiles]) files.set('/' + asset, [await readFile('app/' + asset), 'image/png']);
   if (demo) {
     if (configuration.mode !== 'local' || configuration.chainId !== '31337') throw new Error('Demo actions are local only.');
     files.set('/demo.json', [JSON.stringify({ recipient: demo.recipient, recovery: demo.recovery, amount: demo.amount ?? '100' }), 'application/json']);

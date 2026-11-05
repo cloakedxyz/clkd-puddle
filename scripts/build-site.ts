@@ -14,6 +14,7 @@ import { publicSiteConfiguration, readSiteRelease, requirePublicArbitrum, valida
 import type { SiteRelease } from './site-release.ts';
 import { isDeepStrictEqual } from 'node:util';
 import { chainLogoFiles } from '../app/networks.ts';
+import {protocolLogoFiles} from '../app/protocols.ts';
 
 /** Static app and docs. A receiving build requires reviewed, already-deployed contracts. */
 export async function buildSite(directory = 'dist', input?: RailgunSiteConfiguration, release?: SiteRelease) {
@@ -34,6 +35,7 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
   }
   await rm(output, {recursive: true, force: true});
   await mkdir(join(output, 'assets/chains'), {recursive: true});
+  await mkdir(join(output, 'assets/protocols'), {recursive: true});
   await build({entryPoints: {theme: 'app/theme.ts', site: 'app/site.ts', ...(configuration ? {railgun: configuration.multiAsset ? 'app/multi-asset.ts' : 'app/railgun.ts'} : {})},
     outdir: output, bundle: true, format: 'esm', platform: 'browser', target: 'es2022', minify: true});
   await writeFile(join(output, 'index.html'), await renderApp(configuration ? 'railgun' : 'public'));
@@ -47,7 +49,7 @@ export async function buildSite(directory = 'dist', input?: RailgunSiteConfigura
     await writeFile(join(target, 'index.html'), await renderDocumentation(page));
   }
   for (const [path, [text]] of await machineDocumentation()) await writeFile(join(output, path.slice(1)), text);
-  for (const file of ['style.css', 'docs.css', 'assets/metamask.svg', 'assets/rainbow.svg', 'assets/rabby.svg', 'assets/railgun.svg', ...chainLogoFiles]) {
+  for (const file of ['style.css', 'docs.css', 'assets/lucide.svg', 'assets/Lucide-LICENSE', 'assets/QRCode-LICENSE', 'assets/metamask.svg', 'assets/rainbow.svg', 'assets/rabby.svg', 'assets/railgun.svg', ...chainLogoFiles, ...protocolLogoFiles]) {
     await copyFile(join('app', file), join(output, file));
   }
 }
